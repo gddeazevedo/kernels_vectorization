@@ -143,7 +143,6 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
             const double *block = &A.vals[(size_t)block_idx * bs * bs];
             const double *xcol = &x[(size_t)block_col * bs];
 
-           
             __m512d vb = _mm512_loadu_pd(block);  // Carrega 8 elementos do bloco
 
             __m256d vx_256 = _mm256_loadu_pd(xcol); // Carrega xcol em um vetor de 256 bits
