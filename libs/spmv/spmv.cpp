@@ -127,7 +127,7 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
 
     // Índices de permutação para replicar os elementos de x
     // [x0, x1, x2, x0, x1, x2, x0, x1]
-    __m512i perm_idx = _mm512_set_epi64(1, 0, 2, 1, 0, 2, 1, 0);
+    const __m512i perm_idx = _mm512_set_epi64(1, 0, 2, 1, 0, 2, 1, 0);
 
     for (int row = 0; row < A.nb; row++) {
         int row_start = A.ia[row];

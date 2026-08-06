@@ -6,6 +6,11 @@
 
 namespace hn = hwy::HWY_NAMESPACE;
 
+#define MASK_ZERO_SLOT_3 0x8  // 0b1000
+#define MASK_SUM_FIRST_3 0x07 // 0b00000111
+#define MASK_SUM_MID_3   0x38 // 0b00111000
+#define MASK_SUM_LAST_2  0xC0 // 0b11000000
+
 #define BS 3
 #define idx(i,j) ((i)*BS + (j))
 

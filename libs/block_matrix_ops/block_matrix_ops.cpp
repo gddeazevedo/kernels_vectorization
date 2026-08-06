@@ -119,11 +119,11 @@ void matmat_omp(double *dst, const double *A, const double *B) {
 }
 
 void matmat_avx256(double *dst, const double *A, const double *B) {
-    const __m256i mask = _mm256_set_epi64x(0, -1, -1, -1);
+    const __mmask8 k = 0x7; // 0b00000111
 
-    const __m256d b0 = _mm256_maskload_pd(&B[idx(0,0)], mask);
-    const __m256d b1 = _mm256_maskload_pd(&B[idx(1,0)], mask);
-    const __m256d b2 = _mm256_maskload_pd(&B[idx(2,0)], mask);
+    const __m256d b0 = _mm256_maskz_loadu_pd(k, &B[idx(0,0)]);
+    const __m256d b1 = _mm256_maskz_loadu_pd(k, &B[idx(1,0)]);
+    const __m256d b2 = _mm256_maskz_loadu_pd(k, &B[idx(2,0)]);
 
     for (int i = 0; i < BS; i++) {
         __m256d sum = _mm256_setzero_pd();
@@ -132,17 +132,26 @@ void matmat_avx256(double *dst, const double *A, const double *B) {
         sum = _mm256_fmadd_pd(_mm256_set1_pd(A[idx(i,1)]), b1, sum);
         sum = _mm256_fmadd_pd(_mm256_set1_pd(A[idx(i,2)]), b2, sum);
 
-        _mm256_maskstore_pd(&dst[idx(i,0)], mask, sum);
+        _mm256_mask_storeu_pd(&dst[idx(i,0)], k, sum);
     }
 }
 
 void matmat_avx512(double *dst, const double *A, const double *B) {
+    const __m512i  perm_idx = _mm512_set_epi64(1, 0, 2, 1, 0, 2, 1, 0);
+    const __m512d  b_raw    = _mm512_loadu_pd(&B[idx(0,0)]);
+    const __m512i  b_perm   = _mm512_set_epi64(5, 2, 7, 4, 1, 6, 3, 0);
+    const __m512d  b        = _mm512_permutexvar_pd(b_perm, b_raw);
+
     for (int i = 0; i < BS; i++) {
-        for (int j = 0; j < BS; j++) {
-            for (int k = 0; k < BS; k++) {
-                dst[idx(i,j)] += A[idx(i,k)] * B[idx(k,j)];
-            }
-        }
+        __m256d a_256 = _mm256_maskz_loadu_pd(0x7, &A[idx(i, 0)]);
+        __m512d a_512 = _mm512_broadcast_f64x4(a_256);
+        a_512 = _mm512_permutexvar_pd(perm_idx, a_512);
+
+        __m512d prod = _mm512_mul_pd(a_512, b);
+
+        dst[idx(i, 0)] = _mm512_mask_reduce_add_pd(MASK_SUM_FIRST_3, prod);
+        dst[idx(i, 1)] = _mm512_mask_reduce_add_pd(MASK_SUM_MID_3,   prod);
+        dst[idx(i, 2)] = _mm512_mask_reduce_add_pd(MASK_SUM_LAST_2,  prod) + A[idx(i, 2)] * B[idx(2, 2)];
     }
 }
 
@@ -166,12 +175,28 @@ void matmat_hwy256(double *dst, const double *A, const double *B) {
 }
 
 void matmat_hwy512(double *dst, const double *A, const double *B) {
+    const hn::FixedTag<double, 8> d;
+    const hn::Rebind<int64_t, decltype(d)> di;
+
+    HWY_ALIGN const int64_t a_perm_lanes[8] = {0,1,2, 0,1,2, 0,1};
+    HWY_ALIGN const int64_t b_perm_lanes[8] = {0,3,6, 1,4,7, 2,5};
+    const auto a_perm = hn::IndicesFromVec(d, hn::Load(di, a_perm_lanes));
+    const auto b_perm = hn::IndicesFromVec(d, hn::Load(di, b_perm_lanes));
+
+    const auto m_first_3 = hn::FirstN(d, 3);
+    const auto m_first_6 = hn::FirstN(d, 6);
+    const auto m_mid_3   = hn::AndNot(m_first_3, m_first_6);
+    const auto m_last_2  = hn::Not(m_first_6);
+
+    const auto b = hn::TableLookupLanes(hn::LoadU(d, &B[idx(0,0)]), b_perm);
+
     for (int i = 0; i < BS; i++) {
-        for (int j = 0; j < BS; j++) {
-            for (int k = 0; k < BS; k++) {
-                dst[idx(i,j)] += A[idx(i,k)] * B[idx(k,j)];
-            }
-        }
+        auto a = hn::TableLookupLanes(hn::LoadN(d, &A[idx(i,0)], 3), a_perm);
+        auto prod = hn::Mul(a, b);
+
+        dst[idx(i, 0)] = hn::MaskedReduceSum(d, m_first_3, prod);
+        dst[idx(i, 1)] = hn::MaskedReduceSum(d, m_mid_3,   prod);
+        dst[idx(i, 2)] = hn::MaskedReduceSum(d, m_last_2,  prod) + A[idx(i, 2)] * B[idx(2, 2)];
     }
 }
 
