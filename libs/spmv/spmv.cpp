@@ -146,7 +146,7 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
             __m512d vb = _mm512_loadu_pd(block);  // Carrega 8 elementos do bloco
 
             __m256d vx_256 = _mm256_loadu_pd(xcol); // Carrega xcol em um vetor de 256 bits
-            
+
             __m512d vx_512 = _mm512_broadcast_f64x4(vx_256); // Replica os elementos de xcol usando permutação
             vx_512 = _mm512_permutexvar_pd(perm_idx, vx_512);
 
