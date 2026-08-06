@@ -9,6 +9,7 @@ COLORS = {
     "AVX256":     "#0d6efd",
     "AVX512":     "#fd7e14",
     "Highway256": "#17E110",
+    "Highway512": "#6610f2",
 }
 
 COMPILER_COLORS = {
