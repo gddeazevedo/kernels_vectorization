@@ -41,7 +41,7 @@ int CLI::run_spmv() {
 
 int CLI::run_ilu0() {
     constexpr int ini = 3;
-    constexpr int fim = 203;
+    constexpr int fim = 153;
     constexpr int inc = 10;
     constexpr int K   = 100;
     
