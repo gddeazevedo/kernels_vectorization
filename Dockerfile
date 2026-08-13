@@ -48,7 +48,6 @@ RUN git clone --depth 1 --branch 1.3.0 https://github.com/google/highway.git /tm
     rm -rf /tmp/highway
 
 WORKDIR /app
-COPY . .
 
 SHELL ["/bin/bash", "-c"]
 

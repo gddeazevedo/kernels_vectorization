@@ -26,10 +26,11 @@ void ensure_dir(const char *path) {
     }
 }
 
-void ensure_experiment_dirs(const std::string &compiler, std::string &compiler_dir) {
+void ensure_experiment_dirs(const std::string &prefix, const std::string &compiler, std::string &compiler_dir) {
     ensure_dir("experiments");
-    ensure_dir("experiments/spmv");
-    compiler_dir = "experiments/spmv/" + compiler;
+    std::string bench_dir = "experiments/" + prefix;
+    ensure_dir(bench_dir.c_str());
+    compiler_dir = bench_dir + "/" + compiler;
     ensure_dir(compiler_dir.c_str());
 }
 

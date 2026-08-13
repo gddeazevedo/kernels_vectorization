@@ -1,5 +1,8 @@
+name: vectorization
+
 services:
   vectorization:
+    image: vectorization:latest
     container_name: vectorization
     build: .
     volumes:

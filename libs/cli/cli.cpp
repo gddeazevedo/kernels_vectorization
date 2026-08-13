@@ -40,7 +40,11 @@ int CLI::run_spmv() {
 }
 
 int CLI::run_ilu0() {
-    // TODO: implementar benchmarks de ILU0
-    fprintf(stderr, "ILU0 benchmarks ainda nao implementados.\n");
-    return 1;
+    constexpr int ini = 3;
+    constexpr int fim = 153;
+    constexpr int inc = 10;
+    constexpr int K   = 100;
+    
+    Ilu0Benchmark benchmark(ini, fim, inc, K, compiler);
+    return benchmark.run();
 }

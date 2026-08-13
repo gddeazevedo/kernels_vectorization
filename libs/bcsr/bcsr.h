@@ -23,8 +23,9 @@ public:
    BlockedCSR &operator=(BlockedCSR &&other) noexcept;
 
    void shrink_to_fit();
-   void push_block(int brow, int bcol, const double *block);
+   void push_block(const int row, const int col, const double *block);
    void draw() const;
+   double *get_block(const int row, const int col);
 
    static BlockedCSR generate_blocked27_3x3(int nx, int ny, int nz);
 };

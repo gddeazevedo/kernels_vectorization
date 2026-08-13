@@ -1,17 +1,25 @@
 #include <spmv_benchmarks.h>
 
-SpmvBenchmark::SpmvBenchmark(int ini, int fim, int inc, int K, const std::string &compiler) {
-    this->ini = ini;
-    this->fim = fim;
-    this->inc = inc;
-    this->K   = K;
-    this->compiler = compiler;
+SpmvBenchmark::SpmvBenchmark(int ini, int fim, int inc, int K, const std::string &compiler)
+    : BenchmarkBase(ini, fim, inc, K, compiler) {}
 
-    this->gs_mean   = std::vector<double>(variants.size(), 0.0);
-    this->gs_median = std::vector<double>(variants.size(), 0.0);
+const char *SpmvBenchmark::benchmark_name() const {
+    return "SpMV Benchmark";
 }
 
-void SpmvBenchmark::evaluate_bc_matvecs(int nx, int ny, int nz, FILE *runs_csv) {
+const char *SpmvBenchmark::csv_prefix() const {
+    return "spmv";
+}
+
+int SpmvBenchmark::variant_count() const {
+    return (int)variants.size();
+}
+
+const std::string &SpmvBenchmark::variant_name(int v) const {
+    return variants[v].name;
+}
+
+void SpmvBenchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv) {
     int N = nx * ny * nz;
 
     constexpr int TABLE_WIDTH = 92;
@@ -32,7 +40,7 @@ void SpmvBenchmark::evaluate_bc_matvecs(int nx, int ny, int nz, FILE *runs_csv) 
         x[i] = (double)i;
     }
 
-    bc_matvec(A, x, y_ref);
+    spmv(A, x, y_ref);
 
     double *sample = (double *)malloc(K * sizeof(double));
 
@@ -44,7 +52,7 @@ void SpmvBenchmark::evaluate_bc_matvecs(int nx, int ny, int nz, FILE *runs_csv) 
         double sum = 0.0;
 
         for (int i = 0; i < 5; i++) {
-            variants[v].func(A, x, y_test); // "aquecimento" para minimizar impacto de variações na primeira execução
+            variants[v].func(A, x, y_test);
         }
 
         for (int k = 0; k < K; k++) {
@@ -103,75 +111,4 @@ void SpmvBenchmark::evaluate_bc_matvecs(int nx, int ny, int nz, FILE *runs_csv) 
     free(x);
     free(y_ref);
     free(y_test);
-}
-
-
-int SpmvBenchmark::run() {
-    if (ini <= 0 || fim < ini || inc <= 0 || K <= 0) {
-        printf("Parâmetros inválidos.\n");
-        return 1;
-    }
-
-    constexpr int SUMMARY_WIDTH = 64;
-
-    std::string compiler_dir;
-
-    ensure_experiment_dirs(compiler, compiler_dir);
-
-    std::string spmv_runs = build_path(compiler_dir, "spmv_runs.csv");
-    FILE *runs_csv = fopen(spmv_runs.c_str(), "w");
-    fprintf(runs_csv, "N,nx,ny,nz,variante,media_s,speedup_mean,mediana_s,speedup_median,erro_max\n");
-
-    printf("\n");
-    print_separator('#', SUMMARY_WIDTH);
-    printf("#%*s%*s#\n",
-           (SUMMARY_WIDTH - 2) / 2 + 13, "SpMV Benchmark",
-           (SUMMARY_WIDTH - 2) / 2 - 13, "");
-    print_separator('#', SUMMARY_WIDTH);
-    printf("  Compilador : %s\n", compiler.c_str());
-    printf("  Malhas     : %d → %d (passo %d)\n", ini, fim, inc);
-    printf("  Iterações  : %d por variante\n", K);
-    printf("  Variantes  : %zu\n", variants.size());
-    print_separator('#', SUMMARY_WIDTH);
-
-    for (int nx = ini; nx <= fim; nx += inc) {
-        evaluate_bc_matvecs(nx, nx, nx, runs_csv);
-    }
-
-    fclose(runs_csv);
-
-    printf("\n");
-    print_separator('=', SUMMARY_WIDTH);
-    printf("  Speedup Geral (média harmônica sobre %d malhas)\n", gs_count);
-    print_separator('=', SUMMARY_WIDTH);
-    printf("  %-18s %18s %18s\n", "Variante", "Speedup (Mean)", "Speedup (Median)");
-    print_separator('-', SUMMARY_WIDTH);
-
-    ensure_experiment_dirs(compiler, compiler_dir);
-    std::string spmv_general = build_path(compiler_dir, "spmv_general.csv");
-
-    FILE *speedup_csv = fopen(spmv_general.c_str(), "w");
-    fprintf(speedup_csv, "variante,speedup_geral_mean,speedup_geral_median\n");
-
-    for (int v = 0; v < (int)variants.size(); v++) {
-        double speedup_mean   = gs_count / gs_mean[v];
-        double speedup_median = gs_count / gs_median[v];
-
-        printf("  %-18s %17.2fx %17.2fx\n",
-               variants[v].name.c_str(),
-               speedup_mean,
-               speedup_median);
-
-        fprintf(speedup_csv, "%s,%.4f,%.4f\n",
-                variants[v].name.c_str(),
-                speedup_mean,
-                speedup_median);
-    }
-
-    print_separator('=', SUMMARY_WIDTH);
-    printf("\n");
-
-    fclose(speedup_csv);
-
-    return 0;
 }

@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import pandas as pd
-from plots.spmv_speedup import plot_speedup, plot_speedup_general, plot_compiler_comparison
+from plots.speedup import plot_speedup, plot_speedup_general, plot_compiler_comparison
 
 
 def operation_config(name, label):

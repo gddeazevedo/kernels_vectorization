@@ -19,12 +19,13 @@ target_link_libraries(vectorization
     PUBLIC
     spmv_benchmarks
     ilu0_benchmarks
-    bc_matvec
+    spmv
     bcsr
     cli
     ilu0
     utils
-    helpers
+    block_matrix_ops
+    benchmark_base
     OpenMP::OpenMP_CXX
     hwy
 ) # where are the dependencies for the main executable

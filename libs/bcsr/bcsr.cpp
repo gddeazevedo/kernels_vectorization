@@ -1,7 +1,6 @@
 #include <bcsr.h>
 
-BlockedCSR::BlockedCSR(int nb, int bs, int max_nblocks)
-    : nb(nb), bs(bs), nnzb(0)
+BlockedCSR::BlockedCSR(int nb, int bs, int max_nblocks) : nb(nb), bs(bs), nnzb(0)
 {
     this->ia   = (int *) malloc((nb + 1) * sizeof(int));
     this->ja   = (int *) malloc(max_nblocks * sizeof(int));
@@ -55,12 +54,12 @@ void BlockedCSR::shrink_to_fit() {
     this->vals = (double *) realloc(this->vals, this->nnzb * this->bs * this->bs * sizeof(double));
 }
 
-void BlockedCSR::push_block(int brow, int bcol, const double *block) {
+void BlockedCSR::push_block(int row, int col, const double *block) {
     int pos = this->nnzb;
-    this->ja[pos] = bcol;
+    this->ja[pos] = col;
     memcpy(&this->vals[(size_t)pos * this->bs * this->bs], block, (size_t)this->bs * this->bs * sizeof(double));
     this->nnzb++;
-    this->ia[brow + 1] = this->nnzb;
+    this->ia[row + 1] = this->nnzb;
 }
 
 BlockedCSR BlockedCSR::generate_blocked27_3x3(int nx, int ny, int nz) {
@@ -130,4 +129,18 @@ void BlockedCSR::draw() const {
 
         printf("\n");
     }
+}
+
+double *BlockedCSR::get_block(const int row, const int col) {
+    int row_start = this->ia[row];
+    int row_end   = this->ia[row + 1];
+    int bs2 = this->bs * this->bs;
+
+    for (int p = row_start; p < row_end; p++) {
+        if (ja[p] == col) {
+            return &this->vals[(size_t)p * bs2];
+        }
+    }
+
+    return nullptr;
 }

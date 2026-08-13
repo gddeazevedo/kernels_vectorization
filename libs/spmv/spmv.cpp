@@ -1,6 +1,6 @@
-#include <bc_matvec.h>
+#include <spmv.h>
 
-void bc_matvec(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -26,7 +26,7 @@ void bc_matvec(const BlockedCSR &A, const double * __restrict__ x, double * __re
     }
 }
 
-void bc_matvec_omp(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -43,7 +43,7 @@ void bc_matvec_omp(const BlockedCSR &A, const double * __restrict__ x, double * 
         double y1 = 0.0;
         double y2 = 0.0;
 
-        #pragma omp simd reduction(+:y0,y1,y2) simdlen(3)
+        #pragma omp simd reduction(+:y0,y1,y2)
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
             int block_col = A.ja[block_idx];
 
@@ -76,7 +76,7 @@ static double hadd_256(__m256d v) {
     return _mm_cvtsd_f64(final_sum);
 }
 
-void bc_matvec_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -118,7 +118,7 @@ void bc_matvec_avx256(const BlockedCSR &A, const double * __restrict__ x, double
 }
 
 
-void bc_matvec_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -127,7 +127,7 @@ void bc_matvec_avx512(const BlockedCSR &A, const double * __restrict__ x, double
 
     // Índices de permutação para replicar os elementos de x
     // [x0, x1, x2, x0, x1, x2, x0, x1]
-    __m512i perm_idx = _mm512_set_epi64(1, 0, 2, 1, 0, 2, 1, 0);
+    const __m512i perm_idx = _mm512_set_epi64(1, 0, 2, 1, 0, 2, 1, 0);
 
     for (int row = 0; row < A.nb; row++) {
         int row_start = A.ia[row];
@@ -143,11 +143,10 @@ void bc_matvec_avx512(const BlockedCSR &A, const double * __restrict__ x, double
             const double *block = &A.vals[(size_t)block_idx * bs * bs];
             const double *xcol = &x[(size_t)block_col * bs];
 
-           
             __m512d vb = _mm512_loadu_pd(block);  // Carrega 8 elementos do bloco
 
             __m256d vx_256 = _mm256_loadu_pd(xcol); // Carrega xcol em um vetor de 256 bits
-            
+
             __m512d vx_512 = _mm512_broadcast_f64x4(vx_256); // Replica os elementos de xcol usando permutação
             vx_512 = _mm512_permutexvar_pd(perm_idx, vx_512);
 
@@ -161,7 +160,7 @@ void bc_matvec_avx512(const BlockedCSR &A, const double * __restrict__ x, double
     }
 }
 
-void bc_matvec_hwy256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_hwy256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
     const int bs = A.bs;
 
     const hn::FixedTag<double, 4> d;  // 256-bit fixo: 4 lanes
@@ -201,7 +200,7 @@ void bc_matvec_hwy256(const BlockedCSR &A, const double * __restrict__ x, double
     }
 }
 
-void bc_matvec_hwy512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_hwy512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
     int bs = A.bs;
 
     const hn::FixedTag<double, 8> d;
