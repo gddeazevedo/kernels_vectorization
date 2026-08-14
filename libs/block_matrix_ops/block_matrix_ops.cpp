@@ -18,6 +18,14 @@ static void invert_common(double *dst, double &det, const double *M) {
     dst[idx(2,2)] = M[idx(0,0)] * M[idx(1,1)] - M[idx(0,1)] * M[idx(1,0)];
 }
 
+static void transpose(double *dst, const double *M) {
+    for (int i = 0; i < BS; i++) {
+        for (int j = 0; j < BS; j++) {
+            dst[idx(i,j)] = M[idx(j,i)];
+        }
+    }
+}
+
 void invert_3x3_matrix(double *dst, const double *M) {
     double det;
     invert_common(dst, det, M);
@@ -98,10 +106,14 @@ void invert_3x3_matrix_hwy512(double *dst, const double *M) {
 }
 
 void matmat(double *dst, const double *A, const double *B) {
+    double Bt[BS * BS];
+
+    transpose(Bt, B);
+
     for (int i = 0; i < BS; i++) {
         for (int j = 0; j < BS; j++) {
             for (int k = 0; k < BS; k++) {
-                dst[idx(i,j)] += A[idx(i,k)] * B[idx(k,j)];
+                dst[idx(i, j)] += A[idx(i, k)] * Bt[idx(j, k)];
             }
         }
     }
@@ -119,7 +131,7 @@ void matmat_omp(double *dst, const double *A, const double *B) {
 }
 
 void matmat_avx256(double *dst, const double *A, const double *B) {
-    const __mmask8 k = 0x7; // 0b00000111
+    const __mmask8 k = 0x7;
 
     const __m256d b0 = _mm256_maskz_loadu_pd(k, &B[idx(0,0)]);
     const __m256d b1 = _mm256_maskz_loadu_pd(k, &B[idx(1,0)]);
@@ -217,22 +229,22 @@ void matsub_avx256(double *dst, const double *A, const double *B) {
     __m256d va   = _mm256_loadu_pd(&A[0]);
     __m256d vb   = _mm256_loadu_pd(&B[0]);
     __m256d vdst = _mm256_sub_pd(va, vb);
-    _mm256_storeu_pd(&dst[0], vdst);    
-    
+    _mm256_storeu_pd(&dst[0], vdst);
+
     va   = _mm256_loadu_pd(&A[4]);
     vb   = _mm256_loadu_pd(&B[4]);
     vdst = _mm256_sub_pd(va, vb);
-    _mm256_storeu_pd(&dst[4], vdst);    
+    _mm256_storeu_pd(&dst[4], vdst);
 
     dst[8] = A[8] - B[8];
 }
 
-void matsub_avx512(double *dst, const double *A, const double *B) {   
+void matsub_avx512(double *dst, const double *A, const double *B) {
     __m512d va   = _mm512_loadu_pd(A);
     __m512d vb   = _mm512_loadu_pd(B);
     __m512d vdst = _mm512_sub_pd(va, vb);
     _mm512_storeu_pd(dst, vdst);
-    dst[8] = A[8] - B[8];    
+    dst[8] = A[8] - B[8];
 }
 
 void matsub_hwy256(double *dst, const double *A, const double *B) {

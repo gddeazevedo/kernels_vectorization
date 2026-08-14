@@ -11,3 +11,4 @@ void ilu0_decomposition_avx256(BlockedCSR &A);
 void ilu0_decomposition_avx512(BlockedCSR &A);
 void ilu0_decomposition_hwy256(BlockedCSR &A);
 void ilu0_decomposition_hwy512(BlockedCSR &A);
+void ilu0_decomposition_batch8(BlockedCSR &A);

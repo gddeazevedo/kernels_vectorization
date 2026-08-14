@@ -18,7 +18,8 @@ class Ilu0Benchmark : public BenchmarkBase {
             {"AVX256",      ilu0_decomposition_avx256},
             {"AVX512",      ilu0_decomposition_avx512},
             {"Highway256",  ilu0_decomposition_hwy256},
-            {"Highway512",  ilu0_decomposition_hwy512}
+            {"Highway512",  ilu0_decomposition_hwy512},
+            {"Batch8",      ilu0_decomposition_batch8}
         };
 
         void evaluate(int nx, int ny, int nz, FILE *runs_csv) override;
