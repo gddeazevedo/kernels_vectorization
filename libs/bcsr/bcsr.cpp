@@ -1,7 +1,10 @@
 #include <bcsr.h>
 
-BlockedCSR::BlockedCSR(int nb, int bs, int max_nblocks) : nb(nb), bs(bs), nnzb(0)
+BlockedCSR::BlockedCSR(int nb, int bs, int max_nblocks)
 {
+    this->nnzb = 0;
+    this->nb   = nb;
+    this->bs   = bs;
     this->ia   = (int *) malloc((nb + 1) * sizeof(int));
     this->ja   = (int *) malloc(max_nblocks * sizeof(int));
     this->vals = (double *) malloc(max_nblocks * bs * bs * sizeof(double));
@@ -134,11 +137,16 @@ void BlockedCSR::draw() const {
 double *BlockedCSR::get_block(const int row, const int col) {
     int row_start = this->ia[row];
     int row_end   = this->ia[row + 1];
-    int bs2 = this->bs * this->bs;
 
-    for (int p = row_start; p < row_end; p++) {
-        if (ja[p] == col) {
-            return &this->vals[(size_t)p * bs2];
+    while (row_start < row_end) {
+        int mid = (row_start + row_end) >> 1;
+
+        if (this->ja[mid] < col) {
+            row_start = mid + 1;
+        } else if (this->ja[mid] > col) {
+            row_end = mid;
+        } else {
+            return &this->vals[(size_t) mid * this->bs * this->bs];
         }
     }
 

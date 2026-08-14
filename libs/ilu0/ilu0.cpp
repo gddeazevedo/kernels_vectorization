@@ -33,10 +33,6 @@ static inline void unpack_blocks(double *vals, __m512i voff, const __m512d in[9]
     }
 }
 
-static inline void broadcast_block(__m512d out[9], const double *blk) {
-    for (int e = 0; e < 9; e++) out[e] = _mm512_set1_pd(blk[e]);
-}
-
 static inline void process_tile(double *vals,
                                 const int64_t *off_ij, const int64_t *off_kj, int n) {
     __mmask8 m  = (__mmask8)((1u << n) - 1);
