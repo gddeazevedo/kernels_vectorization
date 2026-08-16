@@ -3,8 +3,6 @@ project(vectorization)
 
 set(CMAKE_CXX_STANDARD 23)
 
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
-
 find_package(OpenMP REQUIRED)
 find_package(hwy 1.3.0 REQUIRED)
 
