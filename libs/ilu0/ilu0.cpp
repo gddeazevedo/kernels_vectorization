@@ -271,58 +271,96 @@ static void matsub_hwy256(double *dst, const double *A, const double *B)
     dst[8] = A[8] - B[8];
 }
 
-static void invert_3x3_matrix_hwy512(double *dst, const double *M)
-{
-    double det;
-    invert_common(dst, det, M);
-
-    const hn::FixedTag<double, 8> d;
-
-    auto vdet = hn::Set(d, det);
-    auto vdst = hn::LoadU(d, dst);
-    vdst = hn::Div(vdst, vdet);
-    hn::StoreU(vdst, d, dst);
-
-    dst[8] = dst[8] / det;
-}
-
-static void matmat_hwy512(double *dst, const double *A, const double *B)
+static inline void gather_blocks_hwy512(
+    hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
+    const double *blocks,
+    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 8>>> offsets,
+    hn::Mask<hn::FixedTag<double, 8>> mask
+)
 {
     const hn::FixedTag<double, 8> d;
     const hn::Rebind<int64_t, decltype(d)> di;
 
-    HWY_ALIGN const int64_t a_perm_lanes[8] = {0,1,2, 0,1,2, 0,1};
-    HWY_ALIGN const int64_t b_perm_lanes[8] = {0,3,6, 1,4,7, 2,5};
-    const auto a_perm = hn::IndicesFromVec(d, hn::Load(di, a_perm_lanes));
-    const auto b_perm = hn::IndicesFromVec(d, hn::Load(di, b_perm_lanes));
+    const auto zeros = hn::Zero(d);
 
-    const auto m_first_3 = hn::FirstN(d, 3);
-    const auto m_first_6 = hn::FirstN(d, 6);
-    const auto m_mid_3   = hn::AndNot(m_first_3, m_first_6);
-    const auto m_last_2  = hn::Not(m_first_6);
-
-    const auto b = hn::TableLookupLanes(hn::LoadU(d, &B[idx(0,0)]), b_perm);
-
-    for (int i = 0; i < BS; i++) {
-        auto a = hn::TableLookupLanes(hn::LoadN(d, &A[idx(i,0)], 3), a_perm);
-        auto prod = hn::Mul(a, b);
-
-        dst[idx(i, 0)] = hn::MaskedReduceSum(d, m_first_3, prod);
-        dst[idx(i, 1)] = hn::MaskedReduceSum(d, m_mid_3,   prod);
-        dst[idx(i, 2)] = hn::MaskedReduceSum(d, m_last_2,  prod) + A[idx(i, 2)] * B[idx(2, 2)];
+    for (int reg = 0; reg < BS2; reg++) {
+        auto indices = hn::Add(offsets, hn::Set(di, reg));
+        dst[reg] = hn::MaskedGatherIndexOr(zeros, mask, d, blocks, indices);
     }
 }
 
-static void matsub_hwy512(double *dst, const double *A, const double *B)
+static inline void scatter_blocks_hwy512(
+    double *blocks,
+    const hn::Vec<hn::FixedTag<double, 8>> src[BS2],
+    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 8>>> offsets,
+    hn::Mask<hn::FixedTag<double, 8>> mask
+)
+{
+    const hn::FixedTag<double, 8> d;
+    const hn::Rebind<int64_t, decltype(d)> di;
+
+    for (int reg = 0; reg < BS2; reg++) {
+        auto indices = hn::Add(offsets, hn::Set(di, reg));
+        hn::MaskedScatterIndex(src[reg], mask, d, blocks, indices);
+    }
+}
+
+static inline void matmat_hwy512(
+    hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
+    const hn::Vec<hn::FixedTag<double, 8>> A[BS2],
+    const hn::Vec<hn::FixedTag<double, 8>> B[BS2]
+)
+{
+    for (int row = 0; row < BS; row++) {
+        for (int col = 0; col < BS; col++) {
+            auto acc = hn::Mul   (A[idx(row, 0)], B[idx(0, col)]);
+            acc      = hn::MulAdd(A[idx(row, 1)], B[idx(1, col)], acc);
+            acc      = hn::MulAdd(A[idx(row, 2)], B[idx(2, col)], acc);
+            dst[idx(row, col)] = acc;
+        }
+    }
+}
+
+static inline void matsub_hwy512(
+    hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
+    const hn::Vec<hn::FixedTag<double, 8>> A[BS2],
+    const hn::Vec<hn::FixedTag<double, 8>> B[BS2]
+)
 {
     const hn::FixedTag<double, 8> d;
 
-    auto va   = hn::LoadU(d, A);
-    auto vb   = hn::LoadU(d, B);
-    auto vdst = hn::Sub(va, vb);
-    hn::StoreU(vdst, d, dst);
+    for (int reg = 0; reg < BS2; reg++) {
+        dst[reg] = hn::Sub(A[reg], B[reg]);
+    }
+}
 
-    dst[8] = A[8] - B[8];
+static inline void process_blocks_hwy512(
+    double *blocks,
+    const int64_t *offsets_i,
+    const int64_t *offsets_k,
+    int n_blocks
+)
+{
+    const hn::FixedTag<double, 8> d;
+    const hn::Rebind<int64_t, decltype(d)> di;
+
+    auto mask = hn::FirstN(d, n_blocks);
+
+    auto voffsets_i = hn::LoadU(di, offsets_i);
+    auto voffsets_k = hn::LoadU(di, offsets_k);
+
+    hn::Vec<decltype(d)> Bij[BS2];
+    hn::Vec<decltype(d)> Bkj[BS2];
+    hn::Vec<decltype(d)> prod[BS2];
+    hn::Vec<decltype(d)> diff[BS2];
+
+    gather_blocks_hwy512(Bij, blocks, voffsets_i, mask);
+    gather_blocks_hwy512(Bkj, blocks, voffsets_k, mask);
+
+    matmat_hwy512(prod, Bij, Bkj);
+    matsub_hwy512(diff, Bij, prod);
+
+    scatter_blocks_hwy512(blocks, diff, voffsets_i, mask);
 }
 
 void ilu0_decomposition(BlockedCSR &A) {
@@ -590,8 +628,10 @@ void ilu0_decomposition_hwy512(BlockedCSR &A) {
     int bs2 = A.bs * A.bs;
 
     double *prod = (double *) calloc(bs2, sizeof(double));
-    double *diff = (double *) calloc(bs2, sizeof(double));
     double *inv  = (double *) calloc(bs2, sizeof(double));
+
+    const hn::FixedTag<double, 8> d;
+    const int batch_size = hn::Lanes(d);
 
     for (int i = 0; i < A.nb; i++) {
         int row_start = A.ia[i];
@@ -607,10 +647,14 @@ void ilu0_decomposition_hwy512(BlockedCSR &A) {
             double *block_ik = &A.vals[(size_t) p * bs2];
             double *diag_kk  = A.get_block(k, k);
 
-            invert_3x3_matrix_hwy512(inv, diag_kk);
-            matmat_hwy512(prod, block_ik, inv);
+            invert_3x3_matrix(inv, diag_kk);
+            matmat(prod, block_ik, inv);
             memcpy(block_ik, prod, sizeof(double) * bs2);
             memset(prod, 0, sizeof(double) * bs2);
+
+            int64_t offsets_i[8];
+            int64_t offsets_k[8];
+            int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
                 int j = A.ja[q];
@@ -621,17 +665,23 @@ void ilu0_decomposition_hwy512(BlockedCSR &A) {
                     continue;
                 }
 
-                double *block_ij = &A.vals[(size_t) q * bs2];
+                offsets_i[counter] = (int64_t) q * bs2;
+                offsets_k[counter] = block_kj - A.vals;
 
-                matmat_hwy512(prod, block_ij, block_kj);
-                matsub_hwy512(diff, block_ij, prod);
-                memset(prod, 0, sizeof(double) * bs2);
-                memcpy(block_ij, diff, sizeof(double) * bs2);
+                counter++;
+
+                if (counter == batch_size) {
+                    process_blocks_hwy512(A.vals, offsets_i, offsets_k, counter);
+                    counter = 0;
+                }
+            }
+
+            if (counter > 0) {
+                process_blocks_hwy512(A.vals, offsets_i, offsets_k, counter);
             }
         }
     }
 
     free(prod);
-    free(diff);
     free(inv);
 }

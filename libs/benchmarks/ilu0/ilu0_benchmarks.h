@@ -2,6 +2,7 @@
 
 #include <benchmark_base.h>
 #include <ilu0.h>
+#include <unistd.h>
 
 struct Ilu0Variant
 {
