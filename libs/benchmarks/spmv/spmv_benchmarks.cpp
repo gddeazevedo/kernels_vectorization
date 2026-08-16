@@ -3,23 +3,28 @@
 SpmvBenchmark::SpmvBenchmark(int ini, int fim, int inc, int K, const std::string &compiler)
     : BenchmarkBase(ini, fim, inc, K, compiler) {}
 
-const char *SpmvBenchmark::benchmark_name() const {
+const char *SpmvBenchmark::benchmark_name() const
+{
     return "SpMV Benchmark";
 }
 
-const char *SpmvBenchmark::csv_prefix() const {
+const char *SpmvBenchmark::csv_prefix() const
+{
     return "spmv";
 }
 
-int SpmvBenchmark::variant_count() const {
+int SpmvBenchmark::variant_count() const
+{
     return (int)variants.size();
 }
 
-const std::string &SpmvBenchmark::variant_name(int v) const {
+const std::string &SpmvBenchmark::variant_name(int v) const
+{
     return variants[v].name;
 }
 
-void SpmvBenchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv) {
+void SpmvBenchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
+{
     int N = nx * ny * nz;
 
     constexpr int TABLE_WIDTH = 92;

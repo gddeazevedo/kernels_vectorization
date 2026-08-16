@@ -1,6 +1,7 @@
 #include <spmv.h>
 
-void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -26,7 +27,8 @@ void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restric
     }
 }
 
-void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -61,7 +63,8 @@ void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __res
     }
 }
 
-static double hadd_256(__m256d v) {
+static double hadd_256(__m256d v)
+{
     __m256d zero = _mm256_setzero_pd();
 
     // v_mod = [v0, v1, v2, 0.0]
@@ -76,7 +79,8 @@ static double hadd_256(__m256d v) {
     return _mm_cvtsd_f64(final_sum);
 }
 
-void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -118,7 +122,8 @@ void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __
 }
 
 
-void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -160,7 +165,8 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
     }
 }
 
-void spmv_hwy256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_hwy256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     const int bs = A.bs;
 
     const hn::FixedTag<double, 4> d;  // 256-bit fixo: 4 lanes
@@ -200,7 +206,8 @@ void spmv_hwy256(const BlockedCSR &A, const double * __restrict__ x, double * __
     }
 }
 
-void spmv_hwy512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_hwy512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     int bs = A.bs;
 
     const hn::FixedTag<double, 8> d;

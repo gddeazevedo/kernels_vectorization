@@ -363,7 +363,8 @@ static inline void process_blocks_hwy512(
     scatter_blocks_hwy512(blocks, diff, voffsets_i, mask);
 }
 
-void ilu0_decomposition(BlockedCSR &A) {
+void ilu0_decomposition(BlockedCSR &A)
+{
     int bs2 = A.bs * A.bs;
 
     double *prod = (double *) calloc(bs2, sizeof(double));
@@ -413,7 +414,8 @@ void ilu0_decomposition(BlockedCSR &A) {
     free(inv);
 }
 
-void ilu0_decomposition_omp(BlockedCSR &A) {
+void ilu0_decomposition_omp(BlockedCSR &A)
+{
     int bs2 = A.bs * A.bs;
 
     double *prod = (double *) calloc(bs2, sizeof(double));
@@ -463,7 +465,8 @@ void ilu0_decomposition_omp(BlockedCSR &A) {
     free(inv);
 }
 
-void ilu0_decomposition_avx256(BlockedCSR &A) {
+void ilu0_decomposition_avx256(BlockedCSR &A)
+{
     int bs2 = A.bs * A.bs;
 
     double *prod = (double *) calloc(bs2, sizeof(double));
@@ -513,7 +516,8 @@ void ilu0_decomposition_avx256(BlockedCSR &A) {
     free(inv);
 }
 
-void ilu0_decomposition_avx512(BlockedCSR &A) {
+void ilu0_decomposition_avx512(BlockedCSR &A)
+{
     int bs2 = A.bs * A.bs;
 
     double *prod = (double *) calloc(bs2, sizeof(double));
@@ -574,7 +578,8 @@ void ilu0_decomposition_avx512(BlockedCSR &A) {
     free(inv);
 }
 
-void ilu0_decomposition_hwy256(BlockedCSR &A) {
+void ilu0_decomposition_hwy256(BlockedCSR &A)
+{
     int bs2 = A.bs * A.bs;
 
     double *prod = (double *) calloc(bs2, sizeof(double));
@@ -624,7 +629,8 @@ void ilu0_decomposition_hwy256(BlockedCSR &A) {
     free(inv);
 }
 
-void ilu0_decomposition_hwy512(BlockedCSR &A) {
+void ilu0_decomposition_hwy512(BlockedCSR &A)
+{
     int bs2 = A.bs * A.bs;
 
     double *prod = (double *) calloc(bs2, sizeof(double));

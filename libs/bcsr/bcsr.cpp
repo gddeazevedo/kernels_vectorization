@@ -17,7 +17,8 @@ BlockedCSR::BlockedCSR(int nb, int bs, int max_nblocks)
     this->ia[0] = 0;
 }
 
-BlockedCSR::~BlockedCSR() {
+BlockedCSR::~BlockedCSR()
+{
     free(this->ia);
     free(this->ja);
     free(this->vals);
@@ -32,7 +33,8 @@ BlockedCSR::BlockedCSR(BlockedCSR &&other) noexcept
     other.vals = nullptr;
 }
 
-BlockedCSR &BlockedCSR::operator=(BlockedCSR &&other) noexcept {
+BlockedCSR &BlockedCSR::operator=(BlockedCSR &&other) noexcept
+{
     if (this != &other) {
         free(this->ia);
         free(this->ja);
@@ -52,12 +54,14 @@ BlockedCSR &BlockedCSR::operator=(BlockedCSR &&other) noexcept {
     return *this;
 }
 
-void BlockedCSR::shrink_to_fit() {
+void BlockedCSR::shrink_to_fit()
+{
     this->ja   = (int *) realloc(this->ja, this->nnzb * sizeof(int));
     this->vals = (double *) realloc(this->vals, this->nnzb * this->bs * this->bs * sizeof(double));
 }
 
-void BlockedCSR::push_block(int row, int col, const double *block) {
+void BlockedCSR::push_block(int row, int col, const double *block)
+{
     int pos = this->nnzb;
     this->ja[pos] = col;
     memcpy(&this->vals[(size_t)pos * this->bs * this->bs], block, (size_t)this->bs * this->bs * sizeof(double));
@@ -65,7 +69,8 @@ void BlockedCSR::push_block(int row, int col, const double *block) {
     this->ia[row + 1] = this->nnzb;
 }
 
-BlockedCSR BlockedCSR::generate_blocked27_3x3(int nx, int ny, int nz) {
+BlockedCSR BlockedCSR::generate_blocked27_3x3(int nx, int ny, int nz)
+{
     int N = nx * ny * nz;
     int bs = 3;
     int max_blocks = N * 27;
@@ -86,7 +91,9 @@ BlockedCSR BlockedCSR::generate_blocked27_3x3(int nx, int ny, int nz) {
                             int nk = k + dk;
                             if (ni < 0 || nj < 0 || nk < 0 || ni >= nx || nj >= ny || nk >= nz) continue;
                             int nid = ni + nj * nx + nk * nx * ny;
+
                             double blk[9];
+
                             if (nid == id) {
                                 for (int r = 0; r < 9; r++) blk[r] = 0.0;
                                 blk[0] = 2.0; blk[4] = 2.0; blk[8] = 2.5;
@@ -94,6 +101,7 @@ BlockedCSR BlockedCSR::generate_blocked27_3x3(int nx, int ny, int nz) {
                             } else {
                                 for (int r = 0; r < 9; r++) blk[r] = 0.05;
                             }
+
                             A.push_block(id, nid, blk);
                             nnz_count++;
                         }
@@ -110,7 +118,8 @@ BlockedCSR BlockedCSR::generate_blocked27_3x3(int nx, int ny, int nz) {
     return A;
 }
 
-void BlockedCSR::draw() const {
+void BlockedCSR::draw() const
+{
     for(int i = 0; i < this->nb; i++) {
         for(int j = 0; j < this->nb; j++) {
             bool is_block = false;
@@ -134,7 +143,8 @@ void BlockedCSR::draw() const {
     }
 }
 
-double *BlockedCSR::get_block(const int row, const int col) {
+double *BlockedCSR::get_block(const int row, const int col)
+{
     int row_start = this->ia[row];
     int row_end   = this->ia[row + 1];
 
