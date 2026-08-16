@@ -3,12 +3,14 @@
 #include <benchmark_base.h>
 #include <spmv.h>
 
-struct MatvecVariant {
+struct MatvecVariant
+{
     const std::string name;
     spmv_func_t func;
 };
 
-class SpmvBenchmark : public BenchmarkBase {
+class SpmvBenchmark : public BenchmarkBase
+{
     private:
         const std::vector<MatvecVariant> variants = {
             {"Base",        spmv},

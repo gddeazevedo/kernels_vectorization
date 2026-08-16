@@ -4,9 +4,13 @@
 #include <bcsr.h>
 #include <vector>
 
-class BenchmarkBase {
+class BenchmarkBase
+{
     protected:
-        int ini, fim, inc, K;
+        int ini;
+        int fim;
+        int inc;
+        int K;
         std::string compiler;
         std::vector<double> gs_mean;
         std::vector<double> gs_median;
