@@ -3,7 +3,7 @@
 #include <benchmark_base.h>
 #include <spmv.h>
 
-struct MatvecVariant
+struct SpmvVariant
 {
     const std::string name;
     spmv_func_t func;
@@ -12,7 +12,7 @@ struct MatvecVariant
 class SpmvBenchmark : public BenchmarkBase
 {
     private:
-        const std::vector<MatvecVariant> variants = {
+        const std::vector<SpmvVariant> variants = {
             {"Base",        spmv},
             {"OpenMP",      spmv_omp},
             {"AVX256",      spmv_avx256},

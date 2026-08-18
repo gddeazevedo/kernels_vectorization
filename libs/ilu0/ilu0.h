@@ -28,14 +28,6 @@ static void invert_3x3_matrix_omp(double *dst, const double *M);
 static void matmat_omp(double *dst, const double *A, const double *B);
 static void matsub_omp(double *dst, const double *A, const double *B);
 
-static void invert_3x3_matrix_avx256(double *dst, const double *M);
-static void matmat_avx256(double *dst, const double *A, const double *B);
-static void matsub_avx256(double *dst, const double *A, const double *B);
-
-static void invert_3x3_matrix_hwy256(double *dst, const double *M);
-static void matmat_hwy256(double *dst, const double *A, const double *B);
-static void matsub_hwy256(double *dst, const double *A, const double *B);
-
 void ilu0_decomposition(BlockedCSR &A);
 void ilu0_decomposition_omp(BlockedCSR &A);
 void ilu0_decomposition_avx256(BlockedCSR &A);
