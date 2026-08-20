@@ -5,6 +5,14 @@ add_library(
 )
 target_include_directories(bcsr PUBLIC bcsr)
 
+# block_ops
+add_library(
+    block_ops
+    block_ops/block_ops.cpp
+)
+target_include_directories(block_ops PUBLIC block_ops)
+target_link_libraries(block_ops PUBLIC hwy OpenMP::OpenMP_CXX)
+
 # spmv
 add_library(
     spmv
@@ -36,7 +44,7 @@ target_link_libraries(spmv_benchmarks PUBLIC bcsr spmv utils benchmark_base)
 
 add_library(ilu0 ilu0/ilu0.cpp)
 target_include_directories(ilu0 PUBLIC ilu0)
-target_link_libraries(ilu0 PUBLIC bcsr)
+target_link_libraries(ilu0 PUBLIC bcsr block_ops)
 
 # benchmarks/ilu0
 add_library(

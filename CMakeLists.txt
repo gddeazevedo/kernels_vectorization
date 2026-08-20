@@ -18,6 +18,7 @@ target_link_libraries(vectorization
     bcsr
     cli
     ilu0
+    block_ops
     utils
     benchmark_base
     OpenMP::OpenMP_CXX
