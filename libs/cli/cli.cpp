@@ -2,14 +2,16 @@
 
 CLI::CLI(int argc, char **argv) : argc(argc), argv(argv) {}
 
-void CLI::print_usage(const char *prog) {
+void CLI::print_usage(const char *prog)
+{
     printf("Uso: %s <operacao> <compilador>\n\n", prog);
     printf("Operacoes disponiveis:\n");
     printf("  spmv\n");
     printf("  ilu0\n");
 }
 
-int CLI::run() {
+int CLI::run()
+{
     if (argc != 3) {
         print_usage(argv[0]);
         return 1;
@@ -29,7 +31,8 @@ int CLI::run() {
     }
 }
 
-int CLI::run_spmv() {
+int CLI::run_spmv()
+{
     constexpr int ini = 3;
     constexpr int fim = 203;
     constexpr int inc = 10;
@@ -39,7 +42,8 @@ int CLI::run_spmv() {
     return benchmark.run();
 }
 
-int CLI::run_ilu0() {
+int CLI::run_ilu0()
+{
     constexpr int ini = 3;
     constexpr int fim = 153;
     constexpr int inc = 10;

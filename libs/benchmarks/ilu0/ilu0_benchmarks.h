@@ -2,15 +2,16 @@
 
 #include <benchmark_base.h>
 #include <ilu0.h>
+#include <unistd.h>
 
-using ilu0_func_t = void (*)(BlockedCSR &);
-
-struct Ilu0Variant {
+struct Ilu0Variant
+{
     const std::string name;
     ilu0_func_t func;
 };
 
-class Ilu0Benchmark : public BenchmarkBase {
+class Ilu0Benchmark : public BenchmarkBase
+{
     private:
         const std::vector<Ilu0Variant> variants = {
             {"Base",        ilu0_decomposition},

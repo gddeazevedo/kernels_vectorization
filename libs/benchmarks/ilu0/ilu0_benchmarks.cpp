@@ -1,28 +1,35 @@
 #include <ilu0_benchmarks.h>
 
+
 Ilu0Benchmark::Ilu0Benchmark(int ini, int fim, int inc, int K, const std::string &compiler)
     : BenchmarkBase(ini, fim, inc, K, compiler) {}
 
-const char *Ilu0Benchmark::benchmark_name() const {
+const char *Ilu0Benchmark::benchmark_name() const
+{
     return "ILU0 Benchmark";
 }
 
-const char *Ilu0Benchmark::csv_prefix() const {
+const char *Ilu0Benchmark::csv_prefix() const
+{
     return "ilu0";
 }
 
-int Ilu0Benchmark::variant_count() const {
+int Ilu0Benchmark::variant_count() const
+{
     return (int)variants.size();
 }
 
-const std::string &Ilu0Benchmark::variant_name(int v) const {
+const std::string &Ilu0Benchmark::variant_name(int v) const
+{
     return variants[v].name;
 }
 
-void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv) {
+void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
+{
     int N = nx * ny * nz;
 
     constexpr int TABLE_WIDTH = 92;
+    constexpr useconds_t COOLDOWN_US = 5000;   // 5 ms entre variantes
 
     printf("\n");
     print_separator('=', TABLE_WIDTH);
@@ -77,6 +84,8 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv) {
             }
         }
         errors[v] = max_err;
+
+        usleep(COOLDOWN_US);   // cooldown: deixa o clock recuperar antes da próxima variante
     }
 
     double mean_ref   = means[0];

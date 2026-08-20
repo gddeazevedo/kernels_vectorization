@@ -1,6 +1,7 @@
 #include <benchmark_base.h>
 
-BenchmarkBase::BenchmarkBase(int ini, int fim, int inc, int K, const std::string &compiler) {
+BenchmarkBase::BenchmarkBase(int ini, int fim, int inc, int K, const std::string &compiler)
+{
     this->ini = ini;
     this->fim = fim;
     this->inc = inc;
@@ -8,7 +9,8 @@ BenchmarkBase::BenchmarkBase(int ini, int fim, int inc, int K, const std::string
     this->compiler = compiler;
 }
 
-int BenchmarkBase::run() {
+int BenchmarkBase::run()
+{
     if (ini <= 0 || fim < ini || inc <= 0 || K <= 0) {
         printf("Parâmetros inválidos.\n");
         return 1;
