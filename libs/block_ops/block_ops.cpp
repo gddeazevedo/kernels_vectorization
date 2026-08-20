@@ -1,23 +1,6 @@
-#pragma once
+#include <block_ops.h>
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <immintrin.h>
-#include <hwy/highway.h>
-
-namespace hn = hwy::HWY_NAMESPACE;
-
-#define MASK_ZERO_SLOT_3 0x8  // 0b1000
-#define MASK_SUM_FIRST_3 0x07 // 0b00000111
-#define MASK_SUM_MID_3   0x38 // 0b00111000
-#define MASK_SUM_LAST_2  0xC0 // 0b11000000
-
-#define BS 3
-#define BS2 (BS * BS)
-#define idx(i,j) ((i)*BS + (j))
-
-inline void invert_common(double *dst, double &det, const double *M)
+void invert_common(double *dst, double &det, const double *M)
 {
     double C00 = M[idx(1,1)] * M[idx(2,2)] - M[idx(1,2)] * M[idx(2,1)];
     double C01 = M[idx(1,2)] * M[idx(2,0)] - M[idx(1,0)] * M[idx(2,2)];
@@ -36,7 +19,7 @@ inline void invert_common(double *dst, double &det, const double *M)
     dst[idx(2,2)] = M[idx(0,0)] * M[idx(1,1)] - M[idx(0,1)] * M[idx(1,0)];
 }
 
-inline void transpose(double *dst, const double *M)
+void transpose(double *dst, const double *M)
 {
     for (int i = 0; i < BS; i++) {
         for (int j = 0; j < BS; j++) {
@@ -45,7 +28,7 @@ inline void transpose(double *dst, const double *M)
     }
 }
 
-inline void invert_3x3_matrix(double *dst, const double *M)
+void invert_3x3_matrix(double *dst, const double *M)
 {
     double det;
     invert_common(dst, det, M);
@@ -55,7 +38,7 @@ inline void invert_3x3_matrix(double *dst, const double *M)
     }
 }
 
-inline void matmat(double *dst, const double *A, const double *B)
+void matmat(double *dst, const double *A, const double *B)
 {
     double Bt[BS * BS];
 
@@ -70,14 +53,14 @@ inline void matmat(double *dst, const double *A, const double *B)
     }
 }
 
-inline void matsub(double *dst, const double *A, const double *B)
+void matsub(double *dst, const double *A, const double *B)
 {
     for (int i = 0; i < BS * BS; i++) {
         dst[i] = A[i] - B[i];
     }
 }
 
-inline void invert_3x3_matrix_omp(double *dst, const double *M)
+void invert_3x3_matrix_omp(double *dst, const double *M)
 {
     double det;
     invert_common(dst, det, M);
@@ -88,7 +71,7 @@ inline void invert_3x3_matrix_omp(double *dst, const double *M)
     }
 }
 
-inline void matmat_omp(double *dst, const double *A, const double *B)
+void matmat_omp(double *dst, const double *A, const double *B)
 {
     for (int i = 0; i < BS; i++) {
         for (int k = 0; k < BS; k++) {
@@ -100,7 +83,7 @@ inline void matmat_omp(double *dst, const double *A, const double *B)
     }
 }
 
-inline void matsub_omp(double *dst, const double *A, const double *B)
+void matsub_omp(double *dst, const double *A, const double *B)
 {
     #pragma omp simd
     for (int i = 0; i < BS * BS; i++) {
@@ -108,7 +91,7 @@ inline void matsub_omp(double *dst, const double *A, const double *B)
     }
 }
 
-inline void gather_blocks_avx256(
+void gather_blocks_avx256(
     __m256d dst[BS2],
     const double *blocks,
     __m256i offsets,
@@ -123,7 +106,7 @@ inline void gather_blocks_avx256(
     }
 }
 
-inline void scatter_blocks_avx256(
+void scatter_blocks_avx256(
     double *blocks,
     const __m256d src[BS2],
     const int64_t *offsets,
@@ -140,7 +123,7 @@ inline void scatter_blocks_avx256(
     }
 }
 
-inline void matmat_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2])
+void matmat_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2])
 {
     for (int row = 0; row < BS; row++) {
         for (int col = 0; col < BS; col++) {
@@ -152,14 +135,14 @@ inline void matmat_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d 
     }
 }
 
-inline void matsub_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2])
+void matsub_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2])
 {
     for (int reg = 0; reg < BS2; reg++) {
         dst[reg] = _mm256_sub_pd(A[reg], B[reg]);
     }
 }
 
-inline void process_blocks_avx256(
+void process_blocks_avx256(
     double *blocks,
     const double *block_ik,
     const int64_t *offsets_i,
@@ -191,7 +174,7 @@ inline void process_blocks_avx256(
     scatter_blocks_avx256(blocks, diff, offsets_i, n_blocks);
 }
 
-inline void gather_blocks_avx512(
+void gather_blocks_avx512(
     __m512d dst[BS2],
     const double *blocks,
     __m512i offsets,
@@ -206,7 +189,7 @@ inline void gather_blocks_avx512(
     }
 }
 
-inline void scatter_blocks_avx512(
+void scatter_blocks_avx512(
     double *blocks,
     const __m512d src[BS2],
     __m512i offsets,
@@ -219,7 +202,7 @@ inline void scatter_blocks_avx512(
     }
 }
 
-inline void matmat_avx512(__m512d dst[BS2], const __m512d A[BS2], const __m512d B[BS2])
+void matmat_avx512(__m512d dst[BS2], const __m512d A[BS2], const __m512d B[BS2])
 {
     for (int row = 0; row < BS; row++) {
         for (int col = 0; col < BS; col++) {
@@ -231,14 +214,14 @@ inline void matmat_avx512(__m512d dst[BS2], const __m512d A[BS2], const __m512d 
     }
 }
 
-inline void matsub_avx512(__m512d dst[BS2], const __m512d A[BS2], const __m512d B[BS2])
+void matsub_avx512(__m512d dst[BS2], const __m512d A[BS2], const __m512d B[BS2])
 {
     for (int reg = 0; reg < BS2; reg++) {
         dst[reg] = _mm512_sub_pd(A[reg], B[reg]);
     }
 }
 
-inline void process_blocks_avx512(
+void process_blocks_avx512(
     double *blocks,
     const double *block_ik,
     const int64_t *offsets_i,
@@ -270,7 +253,7 @@ inline void process_blocks_avx512(
     scatter_blocks_avx512(blocks, diff, voffsets_i, mask);
 }
 
-inline void gather_blocks_hwy256(
+void gather_blocks_hwy256(
     hn::Vec<hn::FixedTag<double, 4>> dst[BS2],
     const double *blocks,
     hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 4>>> offsets,
@@ -288,7 +271,7 @@ inline void gather_blocks_hwy256(
     }
 }
 
-inline void scatter_blocks_hwy256(
+void scatter_blocks_hwy256(
     double *blocks,
     const hn::Vec<hn::FixedTag<double, 4>> src[BS2],
     hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 4>>> offsets,
@@ -304,7 +287,7 @@ inline void scatter_blocks_hwy256(
     }
 }
 
-inline void matmat_hwy256(
+void matmat_hwy256(
     hn::Vec<hn::FixedTag<double, 4>> dst[BS2],
     const hn::Vec<hn::FixedTag<double, 4>> A[BS2],
     const hn::Vec<hn::FixedTag<double, 4>> B[BS2]
@@ -320,7 +303,7 @@ inline void matmat_hwy256(
     }
 }
 
-inline void matsub_hwy256(
+void matsub_hwy256(
     hn::Vec<hn::FixedTag<double, 4>> dst[BS2],
     const hn::Vec<hn::FixedTag<double, 4>> A[BS2],
     const hn::Vec<hn::FixedTag<double, 4>> B[BS2]
@@ -331,7 +314,7 @@ inline void matsub_hwy256(
     }
 }
 
-inline void process_blocks_hwy256(
+void process_blocks_hwy256(
     double *blocks,
     const double *block_ik,
     const int64_t *offsets_i,
@@ -366,7 +349,7 @@ inline void process_blocks_hwy256(
     scatter_blocks_hwy256(blocks, diff, voffsets_i, mask);
 }
 
-inline void gather_blocks_hwy512(
+void gather_blocks_hwy512(
     hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
     const double *blocks,
     hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 8>>> offsets,
@@ -384,7 +367,7 @@ inline void gather_blocks_hwy512(
     }
 }
 
-inline void scatter_blocks_hwy512(
+void scatter_blocks_hwy512(
     double *blocks,
     const hn::Vec<hn::FixedTag<double, 8>> src[BS2],
     hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 8>>> offsets,
@@ -400,7 +383,7 @@ inline void scatter_blocks_hwy512(
     }
 }
 
-inline void matmat_hwy512(
+void matmat_hwy512(
     hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
     const hn::Vec<hn::FixedTag<double, 8>> A[BS2],
     const hn::Vec<hn::FixedTag<double, 8>> B[BS2]
@@ -416,7 +399,7 @@ inline void matmat_hwy512(
     }
 }
 
-inline void matsub_hwy512(
+void matsub_hwy512(
     hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
     const hn::Vec<hn::FixedTag<double, 8>> A[BS2],
     const hn::Vec<hn::FixedTag<double, 8>> B[BS2]
@@ -427,7 +410,7 @@ inline void matsub_hwy512(
     }
 }
 
-inline void process_blocks_hwy512(
+void process_blocks_hwy512(
     double *blocks,
     const double *block_ik,
     const int64_t *offsets_i,
