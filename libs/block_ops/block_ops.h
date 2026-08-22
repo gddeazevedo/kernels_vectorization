@@ -19,7 +19,6 @@ void invert_3x3_matrix(double *dst, const double *M);
 void matmat(double *dst, const double *A, const double *B);
 void matsub(double *dst, const double *A, const double *B);
 
-
 void gather_blocks_omp(
     double dst[BS2][BATCH],
     const double *blocks,
@@ -123,6 +122,7 @@ void process_blocks_hwy256(
     const int64_t *offsets_k,
     int n_blocks
 );
+
 void gather_blocks_hwy512(
     hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
     const double *blocks,
