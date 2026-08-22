@@ -8,7 +8,7 @@ void ilu0_decomposition(BlockedCSR &A)
     double *diff = (double *) calloc(bs2, sizeof(double));
     double *inv  = (double *) calloc(bs2, sizeof(double));
 
-    for (int i = 0; i < A.nb; i++) {
+    for (int i = 1; i < A.nb; i++) {
         int row_start = A.ia[i];
         int row_end   = A.ia[i + 1];
 
@@ -58,7 +58,7 @@ void ilu0_decomposition_omp(BlockedCSR &A)
     double *prod = (double *) calloc(bs2, sizeof(double));
     double *inv  = (double *) calloc(bs2, sizeof(double));
 
-    for (int i = 0; i < A.nb; i++) {
+    for (int i = 1; i < A.nb; i++) {
         int row_start = A.ia[i];
         int row_end   = A.ia[i + 1];
 
@@ -120,7 +120,7 @@ void ilu0_decomposition_avx256(BlockedCSR &A)
 
     constexpr int batch_size = sizeof(__m256d) / sizeof(double);
 
-    for (int i = 0; i < A.nb; i++) {
+    for (int i = 1; i < A.nb; i++) {
         int row_start = A.ia[i];
         int row_end   = A.ia[i + 1];
 
@@ -182,7 +182,7 @@ void ilu0_decomposition_avx512(BlockedCSR &A)
 
     constexpr int batch_size = sizeof(__m512d) / sizeof(double);
 
-    for (int i = 0; i < A.nb; i++) {
+    for (int i = 1; i < A.nb; i++) {
         int row_start = A.ia[i];
         int row_end   = A.ia[i + 1];
 
@@ -245,7 +245,7 @@ void ilu0_decomposition_hwy256(BlockedCSR &A)
     const hn::FixedTag<double, 4> d;
     const int batch_size = hn::Lanes(d);
 
-    for (int i = 0; i < A.nb; i++) {
+    for (int i = 1; i < A.nb; i++) {
         int row_start = A.ia[i];
         int row_end   = A.ia[i + 1];
 
@@ -307,7 +307,7 @@ void ilu0_decomposition_hwy512(BlockedCSR &A)
     const hn::FixedTag<double, 8> d;
     const int batch_size = hn::Lanes(d);
 
-    for (int i = 0; i < A.nb; i++) {
+    for (int i = 1; i < A.nb; i++) {
         int row_start = A.ia[i];
         int row_end   = A.ia[i + 1];
 
