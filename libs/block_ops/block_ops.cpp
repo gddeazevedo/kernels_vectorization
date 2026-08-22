@@ -1,24 +1,5 @@
 #include <block_ops.h>
 
-void invert_common(double *dst, double &det, const double *M)
-{
-    double C00 = M[idx(1,1)] * M[idx(2,2)] - M[idx(1,2)] * M[idx(2,1)];
-    double C01 = M[idx(1,2)] * M[idx(2,0)] - M[idx(1,0)] * M[idx(2,2)];
-    double C02 = M[idx(1,0)] * M[idx(2,1)] - M[idx(1,1)] * M[idx(2,0)];
-
-    det = M[idx(0,0)] * C00 + M[idx(0,1)] * C01 + M[idx(0,2)] * C02;
-
-    dst[idx(0,0)] = C00;
-    dst[idx(1,0)] = C01;
-    dst[idx(2,0)] = C02;
-    dst[idx(0,1)] = M[idx(0,2)] * M[idx(2,1)] - M[idx(0,1)] * M[idx(2,2)];
-    dst[idx(1,1)] = M[idx(0,0)] * M[idx(2,2)] - M[idx(0,2)] * M[idx(2,0)];
-    dst[idx(2,1)] = M[idx(0,1)] * M[idx(2,0)] - M[idx(0,0)] * M[idx(2,1)];
-    dst[idx(0,2)] = M[idx(0,1)] * M[idx(1,2)] - M[idx(0,2)] * M[idx(1,1)];
-    dst[idx(1,2)] = M[idx(0,2)] * M[idx(1,0)] - M[idx(0,0)] * M[idx(1,2)];
-    dst[idx(2,2)] = M[idx(0,0)] * M[idx(1,1)] - M[idx(0,1)] * M[idx(1,0)];
-}
-
 void transpose(double *dst, const double *M)
 {
     for (int i = 0; i < BS; i++) {
@@ -29,9 +10,22 @@ void transpose(double *dst, const double *M)
 }
 
 void invert_3x3_matrix(double *dst, const double *M)
-{
-    double det;
-    invert_common(dst, det, M);
+{    
+    double C00 = M[idx(1,1)] * M[idx(2,2)] - M[idx(1,2)] * M[idx(2,1)];
+    double C01 = M[idx(1,2)] * M[idx(2,0)] - M[idx(1,0)] * M[idx(2,2)];
+    double C02 = M[idx(1,0)] * M[idx(2,1)] - M[idx(1,1)] * M[idx(2,0)];
+
+    double det = M[idx(0,0)] * C00 + M[idx(0,1)] * C01 + M[idx(0,2)] * C02;
+
+    dst[idx(0,0)] = C00;
+    dst[idx(1,0)] = C01;
+    dst[idx(2,0)] = C02;
+    dst[idx(0,1)] = M[idx(0,2)] * M[idx(2,1)] - M[idx(0,1)] * M[idx(2,2)];
+    dst[idx(1,1)] = M[idx(0,0)] * M[idx(2,2)] - M[idx(0,2)] * M[idx(2,0)];
+    dst[idx(2,1)] = M[idx(0,1)] * M[idx(2,0)] - M[idx(0,0)] * M[idx(2,1)];
+    dst[idx(0,2)] = M[idx(0,1)] * M[idx(1,2)] - M[idx(0,2)] * M[idx(1,1)];
+    dst[idx(1,2)] = M[idx(0,2)] * M[idx(1,0)] - M[idx(0,0)] * M[idx(1,2)];
+    dst[idx(2,2)] = M[idx(0,0)] * M[idx(1,1)] - M[idx(0,1)] * M[idx(1,0)];
 
     for (int i = 0; i < BS * BS; i++) {
         dst[i] /= det;
@@ -60,35 +54,94 @@ void matsub(double *dst, const double *A, const double *B)
     }
 }
 
-void invert_3x3_matrix_omp(double *dst, const double *M)
+void gather_blocks_omp(
+    double dst[BS2][BATCH],
+    const double *blocks,
+    const int64_t *offsets,
+    int n_blocks
+)
 {
-    double det;
-    invert_common(dst, det, M);
-
-    #pragma omp simd
-    for (int i = 0; i < BS * BS; i++) {
-        dst[i] /= det;
+    for (int reg = 0; reg < BS2; reg++) {
+        for (int l = 0; l < n_blocks; l++) {
+            dst[reg][l] = blocks[offsets[l] + reg];
+        }
     }
 }
 
-void matmat_omp(double *dst, const double *A, const double *B)
+void scatter_blocks_omp(
+    double *blocks,
+    const double src[BS2][BATCH],
+    const int64_t *offsets,
+    int n_blocks
+)
 {
-    for (int i = 0; i < BS; i++) {
-        for (int k = 0; k < BS; k++) {
-            #pragma omp simd simdlen(3)
-            for (int j = 0; j < BS; j++) {
-                dst[idx(i,j)] += A[idx(i,k)] * B[idx(k,j)];
+    for (int reg = 0; reg < BS2; reg++) {
+        for (int l = 0; l < n_blocks; l++) {
+            blocks[offsets[l] + reg] = src[reg][l];
+        }
+    }
+}
+
+void matmat_batch_omp(
+    double dst[BS2][BATCH],
+    const double A[BS2][BATCH],
+    const double B[BS2][BATCH]
+)
+{
+    for (int row = 0; row < BS; row++) {
+        for (int col = 0; col < BS; col++) {
+            #pragma omp simd simdlen(BATCH)
+            for (int l = 0; l < BATCH; l++) {
+                dst[idx(row, col)][l] = A[idx(row, 0)][l] * B[idx(0, col)][l]
+                                      + A[idx(row, 1)][l] * B[idx(1, col)][l]
+                                      + A[idx(row, 2)][l] * B[idx(2, col)][l];
             }
         }
     }
 }
 
-void matsub_omp(double *dst, const double *A, const double *B)
+void matsub_batch_omp(
+    double dst[BS2][BATCH],
+    const double A[BS2][BATCH],
+    const double B[BS2][BATCH]
+)
 {
-    #pragma omp simd
-    for (int i = 0; i < BS * BS; i++) {
-        dst[i] = A[i] - B[i];
+    for (int reg = 0; reg < BS2; reg++) {
+        #pragma omp simd simdlen(BATCH)
+        for (int l = 0; l < BATCH; l++) {
+            dst[reg][l] = A[reg][l] - B[reg][l];
+        }
     }
+}
+
+void process_blocks_omp(
+    double *blocks,
+    const double *block_ik,
+    const int64_t *offsets_i,
+    const int64_t *offsets_k,
+    int n_blocks
+)
+{
+    double Bij[BS2][BATCH];
+    double Bkj[BS2][BATCH];
+    double Bik[BS2][BATCH];
+    double prod[BS2][BATCH];
+    double diff[BS2][BATCH];
+
+    gather_blocks_omp(Bij, blocks, offsets_i, n_blocks);
+    gather_blocks_omp(Bkj, blocks, offsets_k, n_blocks);
+
+    for (int reg = 0; reg < BS2; reg++) {
+        #pragma omp simd simdlen(BATCH)
+        for (int l = 0; l < BATCH; l++) {
+            Bik[reg][l] = block_ik[reg];
+        }
+    }
+
+    matmat_batch_omp(prod, Bik, Bkj);
+    matsub_batch_omp(diff, Bij, prod);
+
+    scatter_blocks_omp(blocks, diff, offsets_i, n_blocks);
 }
 
 void gather_blocks_avx256(

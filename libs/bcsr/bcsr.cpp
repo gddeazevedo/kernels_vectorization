@@ -69,6 +69,51 @@ void BlockedCSR::push_block(int row, int col, const double *block)
     this->ia[row + 1] = this->nnzb;
 }
 
+void BlockedCSR::draw() const
+{
+    for(int i = 0; i < this->nb; i++) {
+        for(int j = 0; j < this->nb; j++) {
+            bool is_block = false;
+            int row_start = this->ia[i];
+            int row_end   = this->ia[i + 1];
+
+            for(int idx = row_start; idx < row_end; idx++) {
+                if(j == this->ja[idx]) {
+                    printf("[X]");
+                    is_block = true;
+                    break;
+                }           
+            }
+
+            if(!is_block) {
+                printf("   ");
+            } 
+        }
+
+        printf("\n");
+    }
+}
+
+double *BlockedCSR::get_block(const int row, const int col)
+{
+    int row_start = this->ia[row];
+    int row_end   = this->ia[row + 1];
+
+    while (row_start < row_end) {
+        int mid = (row_start + row_end) >> 1;
+
+        if (this->ja[mid] < col) {
+            row_start = mid + 1;
+        } else if (this->ja[mid] > col) {
+            row_end = mid;
+        } else {
+            return &this->vals[(size_t) mid * this->bs * this->bs];
+        }
+    }
+
+    return nullptr;
+}
+
 BlockedCSR BlockedCSR::generate_blocked27_3x3(int nx, int ny, int nz)
 {
     int N = nx * ny * nz;
@@ -116,49 +161,4 @@ BlockedCSR BlockedCSR::generate_blocked27_3x3(int nx, int ny, int nz)
     A.nnzb = nnz_count;
     A.shrink_to_fit();
     return A;
-}
-
-void BlockedCSR::draw() const
-{
-    for(int i = 0; i < this->nb; i++) {
-        for(int j = 0; j < this->nb; j++) {
-            bool is_block = false;
-            int row_start = this->ia[i];
-            int row_end   = this->ia[i + 1];
-
-            for(int idx = row_start; idx < row_end; idx++) {
-                if(j == this->ja[idx]) {
-                    printf("[X]");
-                    is_block = true;
-                    break;
-                }           
-            }
-
-            if(!is_block) {
-                printf("   ");
-            } 
-        }
-
-        printf("\n");
-    }
-}
-
-double *BlockedCSR::get_block(const int row, const int col)
-{
-    int row_start = this->ia[row];
-    int row_end   = this->ia[row + 1];
-
-    while (row_start < row_end) {
-        int mid = (row_start + row_end) >> 1;
-
-        if (this->ja[mid] < col) {
-            row_start = mid + 1;
-        } else if (this->ja[mid] > col) {
-            row_end = mid;
-        } else {
-            return &this->vals[(size_t) mid * this->bs * this->bs];
-        }
-    }
-
-    return nullptr;
 }

@@ -56,7 +56,6 @@ void ilu0_decomposition_omp(BlockedCSR &A)
     int bs2 = A.bs * A.bs;
 
     double *prod = (double *) calloc(bs2, sizeof(double));
-    double *diff = (double *) calloc(bs2, sizeof(double));
     double *inv  = (double *) calloc(bs2, sizeof(double));
 
     for (int i = 0; i < A.nb; i++) {
@@ -73,10 +72,14 @@ void ilu0_decomposition_omp(BlockedCSR &A)
             double *block_ik = &A.vals[(size_t) p * bs2];
             double *diag_kk  = A.get_block(k, k);
 
-            invert_3x3_matrix_omp(inv, diag_kk);
-            matmat_omp(prod, block_ik, inv);
+            invert_3x3_matrix(inv, diag_kk);
+            matmat(prod, block_ik, inv);
             memcpy(block_ik, prod, sizeof(double) * bs2);
             memset(prod, 0, sizeof(double) * bs2);
+
+            int64_t offsets_i[BATCH];
+            int64_t offsets_k[BATCH];
+            int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
                 int j = A.ja[q];
@@ -87,18 +90,24 @@ void ilu0_decomposition_omp(BlockedCSR &A)
                     continue;
                 }
 
-                double *block_ij = &A.vals[(size_t) q * bs2];
+                offsets_i[counter] = (int64_t) q * bs2;
+                offsets_k[counter] = block_kj - A.vals;
 
-                matmat_omp(prod, block_ik, block_kj);
-                matsub_omp(diff, block_ij, prod);
-                memset(prod, 0, sizeof(double) * bs2);
-                memcpy(block_ij, diff, sizeof(double) * bs2);
+                counter++;
+
+                if (counter == BATCH) {
+                    process_blocks_omp(A.vals, block_ik, offsets_i, offsets_k, counter);
+                    counter = 0;
+                }
+            }
+
+            if (counter > 0) {
+                process_blocks_omp(A.vals, block_ik, offsets_i, offsets_k, counter);
             }
         }
     }
 
     free(prod);
-    free(diff);
     free(inv);
 }
 

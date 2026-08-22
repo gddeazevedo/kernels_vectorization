@@ -13,11 +13,12 @@ namespace hn = hwy::HWY_NAMESPACE;
 #define MASK_SUM_MID_3   0x38 // 0b00111000
 #define MASK_SUM_LAST_2  0xC0 // 0b11000000
 
+
+#define BATCH 8
 #define BS 3
 #define BS2 (BS * BS)
 #define idx(i,j) ((i)*BS + (j))
 
-void invert_common(double *dst, double &det, const double *M);
 
 void transpose(double *dst, const double *M);
 
@@ -27,11 +28,40 @@ void matmat(double *dst, const double *A, const double *B);
 
 void matsub(double *dst, const double *A, const double *B);
 
-void invert_3x3_matrix_omp(double *dst, const double *M);
 
-void matmat_omp(double *dst, const double *A, const double *B);
+void gather_blocks_omp(
+    double dst[BS2][BATCH],
+    const double *blocks,
+    const int64_t *offsets,
+    int n_blocks
+);
 
-void matsub_omp(double *dst, const double *A, const double *B);
+void scatter_blocks_omp(
+    double *blocks,
+    const double src[BS2][BATCH],
+    const int64_t *offsets,
+    int n_blocks
+);
+
+void matmat_batch_omp(
+    double dst[BS2][BATCH],
+    const double A[BS2][BATCH],
+    const double B[BS2][BATCH]
+);
+
+void matsub_batch_omp(
+    double dst[BS2][BATCH],
+    const double A[BS2][BATCH],
+    const double B[BS2][BATCH]
+);
+
+void process_blocks_omp(
+    double *blocks,
+    const double *block_ik,
+    const int64_t *offsets_i,
+    const int64_t *offsets_k,
+    int n_blocks
+);
 
 void gather_blocks_avx256(
     __m256d dst[BS2],
