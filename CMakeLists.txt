@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(vectorization)
+project(kernels_vectorization)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -8,9 +8,9 @@ find_package(hwy 1.3.0 REQUIRED)
 
 add_subdirectory(libs)
 
-add_executable(vectorization src/main.cpp)
+add_executable(kernels_vectorization src/main.cpp)
 
-target_link_libraries(vectorization
+target_link_libraries(kernels_vectorization
     PUBLIC
     spmv_benchmarks
     ilu0_benchmarks
