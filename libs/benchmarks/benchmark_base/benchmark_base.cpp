@@ -9,6 +9,65 @@ BenchmarkBase::BenchmarkBase(int ini, int fim, int inc, int K, const std::string
     this->compiler = compiler;
 }
 
+void BenchmarkBase::measure_interleaved(
+    const std::function<void(int)> &prepare,
+    const std::function<void(int)> &kernel,
+    useconds_t cooldown_us,
+    std::vector<double> &means,
+    std::vector<double> &medians
+)
+{
+    int n_variants = variant_count();
+
+    int k_inner = K / ROUNDS;
+    if (k_inner < 1) {
+        k_inner = 1;
+    }
+
+    int n_samples = ROUNDS * k_inner;
+
+    std::vector<std::vector<double>> samples(n_variants);
+    for (int v = 0; v < n_variants; v++) {
+        samples[v].reserve(n_samples);
+    }
+
+    std::vector<int> order(n_variants);
+    std::iota(order.begin(), order.end(), 0);
+
+    std::mt19937 rng(SEED);
+
+    for (int r = 0; r < ROUNDS; r++) {
+        std::shuffle(order.begin(), order.end(), rng);
+
+        for (int v : order) {
+            prepare(v);
+            kernel(v);
+
+            for (int k = 0; k < k_inner; k++) {
+                prepare(v);
+                double t0 = wtime();
+                kernel(v);
+                samples[v].push_back(wtime() - t0);
+            }
+
+            usleep(cooldown_us);
+        }
+    }
+
+    means.assign(n_variants, 0.0);
+    medians.assign(n_variants, 0.0);
+
+    for (int v = 0; v < n_variants; v++) {
+        double sum = 0.0;
+        for (int k = 0; k < n_samples; k++) {
+            sum += samples[v][k];
+        }
+
+        means[v]   = sum / n_samples;
+        medians[v] = median(samples[v].data(), n_samples);
+    }
+}
+
 int BenchmarkBase::run()
 {
     if (ini <= 0 || fim < ini || inc <= 0 || K <= 0) {
@@ -38,6 +97,7 @@ int BenchmarkBase::run()
     printf("  Compilador : %s\n", compiler.c_str());
     printf("  Malhas     : %d → %d (passo %d)\n", ini, fim, inc);
     printf("  Iterações  : %d por variante\n", K);
+    printf("  Rodadas    : %d (ordem aleatorizada)\n", ROUNDS);
     printf("  Variantes  : %d\n", variant_count());
     print_separator('#', SUMMARY_WIDTH);
 

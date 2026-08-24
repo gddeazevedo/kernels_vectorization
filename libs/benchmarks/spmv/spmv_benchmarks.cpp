@@ -28,6 +28,7 @@ void SpmvBenchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
     int N = nx * ny * nz;
 
     constexpr int TABLE_WIDTH = 92;
+    constexpr useconds_t COOLDOWN_US = 50000;
 
     printf("\n");
     print_separator('=', TABLE_WIDTH);
@@ -47,28 +48,20 @@ void SpmvBenchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
 
     spmv(A, x, y_ref);
 
-    double *sample = (double *)malloc(K * sizeof(double));
-
-    std::vector<double> means(variants.size());
-    std::vector<double> medians(variants.size());
+    std::vector<double> means;
+    std::vector<double> medians;
     std::vector<double> errors(variants.size());
 
+    auto prepare = [](int) {};
+
+    auto kernel = [&](int v) {
+        variants[v].func(A, x, y_test);
+    };
+
+    measure_interleaved(prepare, kernel, COOLDOWN_US, means, medians);
+
     for (int v = 0; v < (int)variants.size(); v++) {
-        double sum = 0.0;
-
-        for (int i = 0; i < 5; i++) {
-            variants[v].func(A, x, y_test);
-        }
-
-        for (int k = 0; k < K; k++) {
-            double t0 = wtime();
-            variants[v].func(A, x, y_test);
-            sample[k] = wtime() - t0;
-            sum += sample[k];
-        }
-
-        means[v]   = sum / K;
-        medians[v] = median(sample, K);
+        variants[v].func(A, x, y_test);
 
         double max_err = 0.0;
         for (int i = 0; i < 3 * N; i++) {
@@ -112,7 +105,6 @@ void SpmvBenchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
 
     gs_count++;
 
-    free(sample);
     free(x);
     free(y_ref);
     free(y_test);

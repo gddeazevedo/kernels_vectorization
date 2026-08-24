@@ -29,7 +29,7 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
     int N = nx * ny * nz;
 
     constexpr int TABLE_WIDTH = 92;
-    constexpr useconds_t COOLDOWN_US = 5000;   // 5 ms entre variantes
+    constexpr useconds_t COOLDOWN_US = 50000;
 
     printf("\n");
     print_separator('=', TABLE_WIDTH);
@@ -49,30 +49,23 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
     ilu0_decomposition(A);
     memcpy(ref_vals, A.vals, vals_size);
 
-    double *sample = (double *)malloc(K * sizeof(double));
-
     std::vector<double> means(variants.size());
     std::vector<double> medians(variants.size());
     std::vector<double> errors(variants.size());
 
+    auto prepare = [&](int) {
+        memcpy(A.vals, orig_vals, vals_size);
+    };
+
+    auto kernel = [&](int v) {
+        variants[v].func(A);
+    };
+
+    measure_interleaved(prepare, kernel, COOLDOWN_US, means, medians);   // cooldown: deixa o clock recuperar antes da próxima variante
+
     for (int v = 0; v < (int)variants.size(); v++) {
-        double sum = 0.0;
-
-        for (int i = 0; i < 5; i++) {
-            memcpy(A.vals, orig_vals, vals_size);
-            variants[v].func(A);
-        }
-
-        for (int k = 0; k < K; k++) {
-            memcpy(A.vals, orig_vals, vals_size);
-            double t0 = wtime();
-            variants[v].func(A);
-            sample[k] = wtime() - t0;
-            sum += sample[k];
-        }
-
-        means[v]   = sum / K;
-        medians[v] = median(sample, K);
+        memcpy(A.vals, orig_vals, vals_size);
+        variants[v].func(A);
 
         double max_err = 0.0;
         int total_vals = A.nnzb * A.bs * A.bs;
@@ -84,8 +77,6 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
             }
         }
         errors[v] = max_err;
-
-        usleep(COOLDOWN_US);   // cooldown: deixa o clock recuperar antes da próxima variante
     }
 
     double mean_ref   = means[0];
@@ -122,7 +113,6 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
 
     gs_count++;
 
-    free(sample);
     free(orig_vals);
     free(ref_vals);
 }

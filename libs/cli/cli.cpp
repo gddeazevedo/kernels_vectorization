@@ -48,7 +48,7 @@ int CLI::run_ilu0()
     constexpr int fim = 153;
     constexpr int inc = 10;
     constexpr int K   = 100;
-    
+
     Ilu0Benchmark benchmark(ini, fim, inc, K, compiler);
     return benchmark.run();
 }
