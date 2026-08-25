@@ -383,11 +383,11 @@ void process_blocks_hwy(
     auto voffsets_i = hn::LoadU(di, offsets_i);
     auto voffsets_k = hn::LoadU(di, offsets_k);
 
-    hn::Vec<decltype(d)> Bij[BS2];
-    hn::Vec<decltype(d)> Bkj[BS2];
-    hn::Vec<decltype(d)> Bik[BS2];
-    hn::Vec<decltype(d)> prod[BS2];
-    hn::Vec<decltype(d)> diff[BS2];
+    hn::Vec<HwyTag> Bij[BS2];
+    hn::Vec<HwyTag> Bkj[BS2];
+    hn::Vec<HwyTag> Bik[BS2];
+    hn::Vec<HwyTag> prod[BS2];
+    hn::Vec<HwyTag> diff[BS2];
 
     gather_blocks_hwy(Bij, blocks, voffsets_i, mask);
     gather_blocks_hwy(Bkj, blocks, voffsets_k, mask);
