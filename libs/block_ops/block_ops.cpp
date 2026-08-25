@@ -1,14 +1,5 @@
 #include <block_ops.h>
 
-void transpose(double *dst, const double *M)
-{
-    for (int i = 0; i < BS; i++) {
-        for (int j = 0; j < BS; j++) {
-            dst[idx(i,j)] = M[idx(j,i)];
-        }
-    }
-}
-
 void invert_3x3_matrix(double *dst, const double *M)
 {    
     double C00 = M[idx(1,1)] * M[idx(2,2)] - M[idx(1,2)] * M[idx(2,1)];
@@ -34,14 +25,10 @@ void invert_3x3_matrix(double *dst, const double *M)
 
 void matmat(double *dst, const double *A, const double *B)
 {
-    double Bt[BS * BS];
-
-    transpose(Bt, B);
-
     for (int i = 0; i < BS; i++) {
-        for (int j = 0; j < BS; j++) {
-            for (int k = 0; k < BS; k++) {
-                dst[idx(i, j)] += A[idx(i, k)] * Bt[idx(j, k)];
+        for (int k = 0; k < BS; k++) {
+            for (int j = 0; j < BS; j++) {
+                dst[idx(i, j)] += A[idx(i, k)] * B[idx(k, j)];
             }
         }
     }

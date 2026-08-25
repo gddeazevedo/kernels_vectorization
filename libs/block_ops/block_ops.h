@@ -18,7 +18,6 @@ using HwyTagI = hn::Rebind<int64_t, HwyTag>;
 
 #define HWY_BATCH_MAX HWY_MAX_LANES_D(HwyTag)
 
-void transpose(double *dst, const double *M);
 void invert_3x3_matrix(double *dst, const double *M);
 void matmat(double *dst, const double *A, const double *B);
 void matsub(double *dst, const double *A, const double *B);
