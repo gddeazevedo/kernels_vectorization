@@ -306,15 +306,15 @@ void process_blocks_avx512(
     scatter_blocks_avx512(blocks, diff, voffsets_i, mask);
 }
 
-void gather_blocks_hwy256(
-    hn::Vec<hn::FixedTag<double, 4>> dst[BS2],
+void gather_blocks_hwy(
+    hn::Vec<HwyTag> dst[BS2],
     const double *blocks,
-    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 4>>> offsets,
-    hn::Mask<hn::FixedTag<double, 4>> mask
+    hn::Vec<HwyTagI> offsets,
+    hn::Mask<HwyTag> mask
 )
 {
-    const hn::FixedTag<double, 4> d;
-    const hn::Rebind<int64_t, decltype(d)> di;
+    const HwyTag  d;
+    const HwyTagI di;
 
     const auto zeros = hn::Zero(d);
 
@@ -324,15 +324,15 @@ void gather_blocks_hwy256(
     }
 }
 
-void scatter_blocks_hwy256(
+void scatter_blocks_hwy(
     double *blocks,
-    const hn::Vec<hn::FixedTag<double, 4>> src[BS2],
-    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 4>>> offsets,
-    hn::Mask<hn::FixedTag<double, 4>> mask
+    const hn::Vec<HwyTag> src[BS2],
+    hn::Vec<HwyTagI> offsets,
+    hn::Mask<HwyTag> mask
 )
 {
-    const hn::FixedTag<double, 4> d;
-    const hn::Rebind<int64_t, decltype(d)> di;
+    const HwyTag  d;
+    const HwyTagI di;
 
     for (int reg = 0; reg < BS2; reg++) {
         auto indices = hn::Add(offsets, hn::Set(di, reg));
@@ -340,10 +340,10 @@ void scatter_blocks_hwy256(
     }
 }
 
-void matmat_hwy256(
-    hn::Vec<hn::FixedTag<double, 4>> dst[BS2],
-    const hn::Vec<hn::FixedTag<double, 4>> A[BS2],
-    const hn::Vec<hn::FixedTag<double, 4>> B[BS2]
+void matmat_hwy(
+    hn::Vec<HwyTag> dst[BS2],
+    const hn::Vec<HwyTag> A[BS2],
+    const hn::Vec<HwyTag> B[BS2]
 )
 {
     for (int row = 0; row < BS; row++) {
@@ -356,10 +356,10 @@ void matmat_hwy256(
     }
 }
 
-void matsub_hwy256(
-    hn::Vec<hn::FixedTag<double, 4>> dst[BS2],
-    const hn::Vec<hn::FixedTag<double, 4>> A[BS2],
-    const hn::Vec<hn::FixedTag<double, 4>> B[BS2]
+void matsub_hwy(
+    hn::Vec<HwyTag> dst[BS2],
+    const hn::Vec<HwyTag> A[BS2],
+    const hn::Vec<HwyTag> B[BS2]
 )
 {
     for (int reg = 0; reg < BS2; reg++) {
@@ -367,7 +367,7 @@ void matsub_hwy256(
     }
 }
 
-void process_blocks_hwy256(
+void process_blocks_hwy(
     double *blocks,
     const double *block_ik,
     const int64_t *offsets_i,
@@ -375,8 +375,8 @@ void process_blocks_hwy256(
     int n_blocks
 )
 {
-    const hn::FixedTag<double, 4> d;
-    const hn::Rebind<int64_t, decltype(d)> di;
+    const HwyTag  d;
+    const HwyTagI di;
 
     auto mask = hn::FirstN(d, n_blocks);
 
@@ -389,111 +389,15 @@ void process_blocks_hwy256(
     hn::Vec<decltype(d)> prod[BS2];
     hn::Vec<decltype(d)> diff[BS2];
 
-    gather_blocks_hwy256(Bij, blocks, voffsets_i, mask);
-    gather_blocks_hwy256(Bkj, blocks, voffsets_k, mask);
+    gather_blocks_hwy(Bij, blocks, voffsets_i, mask);
+    gather_blocks_hwy(Bkj, blocks, voffsets_k, mask);
 
     for (int reg = 0; reg < BS2; reg++) {
         Bik[reg] = hn::Set(d, block_ik[reg]);
     }
 
-    matmat_hwy256(prod, Bik, Bkj);
-    matsub_hwy256(diff, Bij, prod);
+    matmat_hwy(prod, Bik, Bkj);
+    matsub_hwy(diff, Bij, prod);
 
-    scatter_blocks_hwy256(blocks, diff, voffsets_i, mask);
-}
-
-void gather_blocks_hwy512(
-    hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
-    const double *blocks,
-    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 8>>> offsets,
-    hn::Mask<hn::FixedTag<double, 8>> mask
-)
-{
-    const hn::FixedTag<double, 8> d;
-    const hn::Rebind<int64_t, decltype(d)> di;
-
-    const auto zeros = hn::Zero(d);
-
-    for (int reg = 0; reg < BS2; reg++) {
-        auto indices = hn::Add(offsets, hn::Set(di, reg));
-        dst[reg] = hn::MaskedGatherIndexOr(zeros, mask, d, blocks, indices);
-    }
-}
-
-void scatter_blocks_hwy512(
-    double *blocks,
-    const hn::Vec<hn::FixedTag<double, 8>> src[BS2],
-    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 8>>> offsets,
-    hn::Mask<hn::FixedTag<double, 8>> mask
-)
-{
-    const hn::FixedTag<double, 8> d;
-    const hn::Rebind<int64_t, decltype(d)> di;
-
-    for (int reg = 0; reg < BS2; reg++) {
-        auto indices = hn::Add(offsets, hn::Set(di, reg));
-        hn::MaskedScatterIndex(src[reg], mask, d, blocks, indices);
-    }
-}
-
-void matmat_hwy512(
-    hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
-    const hn::Vec<hn::FixedTag<double, 8>> A[BS2],
-    const hn::Vec<hn::FixedTag<double, 8>> B[BS2]
-)
-{
-    for (int row = 0; row < BS; row++) {
-        for (int col = 0; col < BS; col++) {
-            auto acc = hn::Mul(A[idx(row, 0)], B[idx(0, col)]);
-            acc      = hn::MulAdd(A[idx(row, 1)], B[idx(1, col)], acc);
-            acc      = hn::MulAdd(A[idx(row, 2)], B[idx(2, col)], acc);
-            dst[idx(row, col)] = acc;
-        }
-    }
-}
-
-void matsub_hwy512(
-    hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
-    const hn::Vec<hn::FixedTag<double, 8>> A[BS2],
-    const hn::Vec<hn::FixedTag<double, 8>> B[BS2]
-)
-{
-    for (int reg = 0; reg < BS2; reg++) {
-        dst[reg] = hn::Sub(A[reg], B[reg]);
-    }
-}
-
-void process_blocks_hwy512(
-    double *blocks,
-    const double *block_ik,
-    const int64_t *offsets_i,
-    const int64_t *offsets_k,
-    int n_blocks
-)
-{
-    const hn::FixedTag<double, 8> d;
-    const hn::Rebind<int64_t, decltype(d)> di;
-
-    auto mask = hn::FirstN(d, n_blocks);
-
-    auto voffsets_i = hn::LoadU(di, offsets_i);
-    auto voffsets_k = hn::LoadU(di, offsets_k);
-
-    hn::Vec<decltype(d)> Bij[BS2];
-    hn::Vec<decltype(d)> Bkj[BS2];
-    hn::Vec<decltype(d)> Bik[BS2];
-    hn::Vec<decltype(d)> prod[BS2];
-    hn::Vec<decltype(d)> diff[BS2];
-
-    gather_blocks_hwy512(Bij, blocks, voffsets_i, mask);
-    gather_blocks_hwy512(Bkj, blocks, voffsets_k, mask);
-
-    for (int reg = 0; reg < BS2; reg++) {
-        Bik[reg] = hn::Set(d, block_ik[reg]);
-    }
-
-    matmat_hwy512(prod, Bik, Bkj);
-    matsub_hwy512(diff, Bij, prod);
-
-    scatter_blocks_hwy512(blocks, diff, voffsets_i, mask);
+    scatter_blocks_hwy(blocks, diff, voffsets_i, mask);
 }

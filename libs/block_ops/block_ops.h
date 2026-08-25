@@ -13,6 +13,10 @@ namespace hn = hwy::HWY_NAMESPACE;
 #define BS2 (BS * BS)
 #define idx(i,j) ((i)*BS + (j))
 
+using HwyTag  = hn::ScalableTag<double>;
+using HwyTagI = hn::Rebind<int64_t, HwyTag>;
+
+#define HWY_BATCH_MAX HWY_MAX_LANES_D(HwyTag)
 
 void transpose(double *dst, const double *M);
 void invert_3x3_matrix(double *dst, const double *M);
@@ -93,59 +97,29 @@ void process_blocks_avx512(
     int n_blocks
 );
 
-void gather_blocks_hwy256(
-    hn::Vec<hn::FixedTag<double, 4>> dst[BS2],
+void gather_blocks_hwy(
+    hn::Vec<HwyTag> dst[BS2],
     const double *blocks,
-    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 4>>> offsets,
-    hn::Mask<hn::FixedTag<double, 4>> mask
+    hn::Vec<HwyTagI> offsets,
+    hn::Mask<HwyTag> mask
 );
-void scatter_blocks_hwy256(
+void scatter_blocks_hwy(
     double *blocks,
-    const hn::Vec<hn::FixedTag<double, 4>> src[BS2],
-    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 4>>> offsets,
-    hn::Mask<hn::FixedTag<double, 4>> mask
+    const hn::Vec<HwyTag> src[BS2],
+    hn::Vec<HwyTagI> offsets,
+    hn::Mask<HwyTag> mask
 );
-void matmat_hwy256(
-    hn::Vec<hn::FixedTag<double, 4>> dst[BS2],
-    const hn::Vec<hn::FixedTag<double, 4>> A[BS2],
-    const hn::Vec<hn::FixedTag<double, 4>> B[BS2]
+void matmat_hwy(
+    hn::Vec<HwyTag> dst[BS2],
+    const hn::Vec<HwyTag> A[BS2],
+    const hn::Vec<HwyTag> B[BS2]
 );
-void matsub_hwy256(
-    hn::Vec<hn::FixedTag<double, 4>> dst[BS2],
-    const hn::Vec<hn::FixedTag<double, 4>> A[BS2],
-    const hn::Vec<hn::FixedTag<double, 4>> B[BS2]
+void matsub_hwy(
+    hn::Vec<HwyTag> dst[BS2],
+    const hn::Vec<HwyTag> A[BS2],
+    const hn::Vec<HwyTag> B[BS2]
 );
-void process_blocks_hwy256(
-    double *blocks,
-    const double *block_ik,
-    const int64_t *offsets_i,
-    const int64_t *offsets_k,
-    int n_blocks
-);
-
-void gather_blocks_hwy512(
-    hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
-    const double *blocks,
-    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 8>>> offsets,
-    hn::Mask<hn::FixedTag<double, 8>> mask
-);
-void scatter_blocks_hwy512(
-    double *blocks,
-    const hn::Vec<hn::FixedTag<double, 8>> src[BS2],
-    hn::Vec<hn::Rebind<int64_t, hn::FixedTag<double, 8>>> offsets,
-    hn::Mask<hn::FixedTag<double, 8>> mask
-);
-void matmat_hwy512(
-    hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
-    const hn::Vec<hn::FixedTag<double, 8>> A[BS2],
-    const hn::Vec<hn::FixedTag<double, 8>> B[BS2]
-);
-void matsub_hwy512(
-    hn::Vec<hn::FixedTag<double, 8>> dst[BS2],
-    const hn::Vec<hn::FixedTag<double, 8>> A[BS2],
-    const hn::Vec<hn::FixedTag<double, 8>> B[BS2]
-);
-void process_blocks_hwy512(
+void process_blocks_hwy(
     double *blocks,
     const double *block_ik,
     const int64_t *offsets_i,

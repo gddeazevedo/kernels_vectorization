@@ -18,8 +18,7 @@ class Ilu0Benchmark : public BenchmarkBase
             {"OpenMP",      ilu0_decomposition_omp},
             {"AVX256",      ilu0_decomposition_avx256},
             {"AVX512",      ilu0_decomposition_avx512},
-            {"Highway256",  ilu0_decomposition_hwy256},
-            {"Highway512",  ilu0_decomposition_hwy512}
+            {"Highway",     ilu0_decomposition_hwy}
         };
 
         void evaluate(int nx, int ny, int nz, FILE *runs_csv) override;

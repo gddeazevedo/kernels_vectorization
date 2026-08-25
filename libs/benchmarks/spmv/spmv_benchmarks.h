@@ -17,8 +17,7 @@ class SpmvBenchmark : public BenchmarkBase
             {"OpenMP",      spmv_omp},
             {"AVX256",      spmv_avx256},
             {"AVX512",      spmv_avx512},
-            {"Highway256",  spmv_hwy256},
-            {"Highway512",  spmv_hwy512}
+            {"Highway",     spmv_hwy}
         };
 
         void evaluate(int nx, int ny, int nz, FILE *runs_csv) override;

@@ -235,15 +235,15 @@ void ilu0_decomposition_avx512(BlockedCSR &A)
     free(inv);
 }
 
-void ilu0_decomposition_hwy256(BlockedCSR &A)
+void ilu0_decomposition_hwy(BlockedCSR &A)
 {
     int bs2 = A.bs * A.bs;
 
     double *prod = (double *) calloc(bs2, sizeof(double));
     double *inv  = (double *) calloc(bs2, sizeof(double));
 
-    const hn::FixedTag<double, 4> d;
-    const int batch_size = hn::Lanes(d);
+    const HwyTag d;
+    const int batch_size = (int) hn::Lanes(d);
 
     for (int i = 1; i < A.nb; i++) {
         int row_start = A.ia[i];
@@ -264,70 +264,8 @@ void ilu0_decomposition_hwy256(BlockedCSR &A)
             memcpy(block_ik, prod, sizeof(double) * bs2);
             memset(prod, 0, sizeof(double) * bs2);
 
-            int64_t offsets_i[batch_size];
-            int64_t offsets_k[batch_size];
-            int counter = 0;
-
-            for (int q = p + 1; q < row_end; q++) {
-                int j = A.ja[q];
-
-                double *block_kj = A.get_block(k, j);
-
-                if (block_kj == nullptr) {
-                    continue;
-                }
-
-                offsets_i[counter] = q * bs2;
-                offsets_k[counter] = block_kj - A.vals;
-                counter++;
-
-                if (counter == batch_size) {
-                    process_blocks_hwy256(A.vals, block_ik, offsets_i, offsets_k, counter);
-                    counter = 0;
-                }
-            }
-
-            if (counter > 0) {
-                process_blocks_hwy256(A.vals, block_ik, offsets_i, offsets_k, counter);
-            }
-        }
-    }
-
-    free(prod);
-    free(inv);
-}
-
-void ilu0_decomposition_hwy512(BlockedCSR &A)
-{
-    int bs2 = A.bs * A.bs;
-
-    double *prod = (double *) calloc(bs2, sizeof(double));
-    double *inv  = (double *) calloc(bs2, sizeof(double));
-
-    const hn::FixedTag<double, 8> d;
-    const int batch_size = hn::Lanes(d);
-
-    for (int i = 1; i < A.nb; i++) {
-        int row_start = A.ia[i];
-        int row_end   = A.ia[i + 1];
-
-        for (int p = row_start; p < row_end; p++) {
-            int k = A.ja[p];
-
-            if (k >= i) {
-                break;
-            }
-
-            double *block_ik = &A.vals[(size_t) p * bs2];
-            double *diag_kk  = A.get_block(k, k);
-
-            invert_3x3_matrix(inv, diag_kk);
-            matmat(prod, block_ik, inv);
-            memcpy(block_ik, prod, sizeof(double) * bs2);
-            memset(prod, 0, sizeof(double) * bs2);
-
-            int64_t offsets_i[batch_size];
-            int64_t offsets_k[batch_size];
+            int64_t offsets_i[HWY_BATCH_MAX];
+            int64_t offsets_k[HWY_BATCH_MAX];
             int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
@@ -345,13 +283,13 @@ void ilu0_decomposition_hwy512(BlockedCSR &A)
                 counter++;
 
                 if (counter == batch_size) {
-                    process_blocks_hwy512(A.vals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_hwy(A.vals, block_ik, offsets_i, offsets_k, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_hwy512(A.vals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_hwy(A.vals, block_ik, offsets_i, offsets_k, counter);
             }
         }
     }
