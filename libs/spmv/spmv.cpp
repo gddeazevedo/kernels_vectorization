@@ -9,15 +9,15 @@ void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restric
     }
 
     for (int row = 0; row < A.nb; row++) {
-        int row_start = A.ia[row];
-        int row_end   = A.ia[row + 1];
+        int row_start = A.brptr[row];
+        int row_end   = A.brptr[row + 1];
 
         double *yrow = &y[row * bs];
 
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            int block_col = A.ja[block_idx];
+            int block_col = A.bcind[block_idx];
 
-            const double *block = &A.vals[block_idx * bs * bs];
+            const double *block = &A.bvals[block_idx * bs * bs];
             const double *xcol  = &x[block_col * bs];
 
             yrow[0] += block[0]*xcol[0] + block[1]*xcol[1] + block[2]*xcol[2];
@@ -36,8 +36,8 @@ void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __res
     }
 
     for (int row = 0; row < A.nb; row++) {
-        int row_start = A.ia[row];
-        int row_end   = A.ia[row + 1];
+        int row_start = A.brptr[row];
+        int row_end   = A.brptr[row + 1];
 
         double *yrow = &y[row * bs];
 
@@ -47,9 +47,9 @@ void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __res
 
         #pragma omp simd reduction(+:y0,y1,y2)
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            int block_col = A.ja[block_idx];
+            int block_col = A.bcind[block_idx];
 
-            const double *block = &A.vals[block_idx * bs * bs];
+            const double *block = &A.bvals[block_idx * bs * bs];
             const double *xcol  = &x[block_col * bs];
 
             y0 += block[0]*xcol[0] + block[1]*xcol[1] + block[2]*xcol[2];
@@ -88,8 +88,8 @@ void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __
     }
    
     for (int row = 0; row < A.nb; row++) {
-        int row_start = A.ia[row];
-        int row_end   = A.ia[row + 1];
+        int row_start = A.brptr[row];
+        int row_end   = A.brptr[row + 1];
 
         double *yrow = &y[(size_t)row * bs];
 
@@ -98,9 +98,9 @@ void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __
         __m256d y2 = _mm256_setzero_pd();
 
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            int block_col = A.ja[block_idx];
+            int block_col = A.bcind[block_idx];
 
-            const double *block = &A.vals[(size_t)block_idx * bs * bs];
+            const double *block = &A.bvals[(size_t)block_idx * bs * bs];
             const double *xcol  = &x[(size_t)block_col * bs];
 
             __m256d vx = _mm256_loadu_pd(xcol);
@@ -135,8 +135,8 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
     const __m512i perm_idx = _mm512_set_epi64(1, 0, 2, 1, 0, 2, 1, 0);
 
     for (int row = 0; row < A.nb; row++) {
-        int row_start = A.ia[row];
-        int row_end   = A.ia[row + 1];
+        int row_start = A.brptr[row];
+        int row_end   = A.brptr[row + 1];
 
         double *yrow = &y[(size_t)row * bs];
 
@@ -144,8 +144,8 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
         double y2_extra = 0.0;
 
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            int block_col = A.ja[block_idx];
-            const double *block = &A.vals[(size_t)block_idx * bs * bs];
+            int block_col = A.bcind[block_idx];
+            const double *block = &A.bvals[(size_t)block_idx * bs * bs];
             const double *xcol = &x[(size_t)block_col * bs];
 
             __m512d vb = _mm512_loadu_pd(block);  // Carrega 8 elementos do bloco
@@ -177,8 +177,8 @@ void spmv_hwy(const BlockedCSR &A, const double * __restrict__ x, double * __res
     }
 
     for (int row = 0; row < A.nb; row++) {
-        const int row_start = A.ia[row];
-        const int row_end   = A.ia[row + 1];
+        const int row_start = A.brptr[row];
+        const int row_end   = A.brptr[row + 1];
 
         double *yrow = &y[(size_t) row * bs];
 
@@ -187,9 +187,9 @@ void spmv_hwy(const BlockedCSR &A, const double * __restrict__ x, double * __res
         auto y2 = hn::Zero(d);
 
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            const int block_col = A.ja[block_idx];
+            const int block_col = A.bcind[block_idx];
 
-            const double *block = &A.vals[(size_t)block_idx * bs * bs];
+            const double *block = &A.bvals[(size_t)block_idx * bs * bs];
             const double *xcol  = &x[(size_t)block_col * bs];
 
             const auto vx  = hn::MaskedLoad(m3, d, xcol);

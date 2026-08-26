@@ -7,12 +7,12 @@
 class BlockedCSR
 {
    public:
-      int nb;       // número de "block rows" (nós)
-      int bs;       // block size vamos usar 3 
-      int nnzb;     // número de blocos não nulos
-      int *ia;      // tamanho nb+1, índice inicial de cada block-row em ja/vals
-      int *ja;      // tamanho nnzb, coluna (block index) de cada bloco
-      double *vals; // tamanho nnzb * bs * bs, blocos armazenados consecutivamente em row-major dentro do bloco
+      int nb;        // número de "block rows" (nós). number of rows
+      int bs;        // block size vamos usar 3. block size
+      int nnzb;      // número de blocos não nulos. nonzero blocks
+      int *brptr;    // tamanho nb+1, índice inicial de cada block-row em bcind/bvals. block rows pointers
+      int *bcind;    // tamanho nnzb, coluna (block index) de cada bloco. block column indexes
+      double *bvals; // tamanho nnzb * bs * bs, blocos armazenados consecutivamente em row-major dentro do bloco. block values
 
       BlockedCSR(int nb, int bs, int max_nblocks);
       ~BlockedCSR();

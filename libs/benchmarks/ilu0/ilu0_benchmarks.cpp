@@ -43,18 +43,18 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
 
     double *orig_vals = (double *)malloc(vals_size);
     double *ref_vals  = (double *)malloc(vals_size);
-    memcpy(orig_vals, A.vals, vals_size);
+    memcpy(orig_vals, A.bvals, vals_size);
 
     // Resultado de referência (variante base)
     ilu0_decomposition(A);
-    memcpy(ref_vals, A.vals, vals_size);
+    memcpy(ref_vals, A.bvals, vals_size);
 
     std::vector<double> means(variants.size());
     std::vector<double> medians(variants.size());
     std::vector<double> errors(variants.size());
 
     auto prepare = [&](int) {
-        memcpy(A.vals, orig_vals, vals_size);
+        memcpy(A.bvals, orig_vals, vals_size);
     };
 
     auto kernel = [&](int v) {
@@ -64,7 +64,7 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
     measure_interleaved(prepare, kernel, COOLDOWN_US, means, medians);   // cooldown: deixa o clock recuperar antes da próxima variante
 
     for (int v = 0; v < (int)variants.size(); v++) {
-        memcpy(A.vals, orig_vals, vals_size);
+        memcpy(A.bvals, orig_vals, vals_size);
         variants[v].func(A);
 
         double max_err = 0.0;
@@ -72,7 +72,7 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
         for (int i = 0; i < total_vals; i++) {
             double ref = fabs(ref_vals[i]);
             if (ref > 0.0) {
-                double diff = fabs(ref_vals[i] - A.vals[i]) / ref;
+                double diff = fabs(ref_vals[i] - A.bvals[i]) / ref;
                 if (diff > max_err) max_err = diff;
             }
         }

@@ -33,9 +33,9 @@ int CLI::run()
 
 int CLI::run_spmv()
 {
-    constexpr int ini = 3;
-    constexpr int fim = 203;
-    constexpr int inc = 10;
+    constexpr int ini = 20;
+    constexpr int fim = 200;
+    constexpr int inc = 20;
     constexpr int K   = 100;
 
     SpmvBenchmark benchmark(ini, fim, inc, K, compiler);
@@ -44,9 +44,10 @@ int CLI::run_spmv()
 
 int CLI::run_ilu0()
 {
-    constexpr int ini = 3;
-    constexpr int fim = 153;
-    constexpr int inc = 10;
+    constexpr int ini = 20;
+    constexpr int fim = 160;
+    constexpr int inc = 20;
+
     constexpr int K   = 100;
 
     Ilu0Benchmark benchmark(ini, fim, inc, K, compiler);

@@ -9,17 +9,17 @@ void ilu0_decomposition(BlockedCSR &A)
     double *inv  = (double *) calloc(bs2, sizeof(double));
 
     for (int i = 1; i < A.nb; i++) {
-        int row_start = A.ia[i];
-        int row_end   = A.ia[i + 1];
+        int row_start = A.brptr[i];
+        int row_end   = A.brptr[i + 1];
 
         for (int p = row_start; p < row_end; p++) {
-            int k = A.ja[p];
+            int k = A.bcind[p];
 
             if (k >= i) {
                 break;
             }
 
-            double *block_ik = &A.vals[(size_t) p * bs2];
+            double *block_ik = &A.bvals[(size_t) p * bs2];
             double *diag_kk  = A.get_block(k, k);
 
             invert_3x3_matrix(inv, diag_kk);
@@ -28,7 +28,7 @@ void ilu0_decomposition(BlockedCSR &A)
             memset(prod, 0, sizeof(double) * bs2);
 
             for (int q = p + 1; q < row_end; q++) {
-                int j = A.ja[q];
+                int j = A.bcind[q];
 
                 double *block_kj = A.get_block(k, j);
 
@@ -36,7 +36,7 @@ void ilu0_decomposition(BlockedCSR &A)
                     continue;
                 }
 
-                double *block_ij = &A.vals[(size_t) q * bs2];
+                double *block_ij = &A.bvals[(size_t) q * bs2];
 
                 matmat(prod, block_ik, block_kj);
                 matsub(diff, block_ij, prod);
@@ -59,17 +59,17 @@ void ilu0_decomposition_omp(BlockedCSR &A)
     double *inv  = (double *) calloc(bs2, sizeof(double));
 
     for (int i = 1; i < A.nb; i++) {
-        int row_start = A.ia[i];
-        int row_end   = A.ia[i + 1];
+        int row_start = A.brptr[i];
+        int row_end   = A.brptr[i + 1];
 
         for (int p = row_start; p < row_end; p++) {
-            int k = A.ja[p];
+            int k = A.bcind[p];
 
             if (k >= i) {
                 break;
             }
 
-            double *block_ik = &A.vals[(size_t) p * bs2];
+            double *block_ik = &A.bvals[(size_t) p * bs2];
             double *diag_kk  = A.get_block(k, k);
 
             invert_3x3_matrix(inv, diag_kk);
@@ -82,7 +82,7 @@ void ilu0_decomposition_omp(BlockedCSR &A)
             int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
-                int j = A.ja[q];
+                int j = A.bcind[q];
 
                 double *block_kj = A.get_block(k, j);
 
@@ -91,18 +91,18 @@ void ilu0_decomposition_omp(BlockedCSR &A)
                 }
 
                 offsets_i[counter] = (int64_t) q * bs2;
-                offsets_k[counter] = block_kj - A.vals;
+                offsets_k[counter] = block_kj - A.bvals;
 
                 counter++;
 
                 if (counter == BATCH) {
-                    process_blocks_omp(A.vals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_omp(A.bvals, block_ik, offsets_i, offsets_k, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_omp(A.vals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_omp(A.bvals, block_ik, offsets_i, offsets_k, counter);
             }
         }
     }
@@ -121,17 +121,17 @@ void ilu0_decomposition_avx256(BlockedCSR &A)
     constexpr int batch_size = sizeof(__m256d) / sizeof(double);
 
     for (int i = 1; i < A.nb; i++) {
-        int row_start = A.ia[i];
-        int row_end   = A.ia[i + 1];
+        int row_start = A.brptr[i];
+        int row_end   = A.brptr[i + 1];
 
         for (int p = row_start; p < row_end; p++) {
-            int k = A.ja[p];
+            int k = A.bcind[p];
 
             if (k >= i) {
                 break;
             }
 
-            double *block_ik = &A.vals[(size_t) p * bs2];
+            double *block_ik = &A.bvals[(size_t) p * bs2];
             double *diag_kk  = A.get_block(k, k);
 
             invert_3x3_matrix(inv, diag_kk);
@@ -144,7 +144,7 @@ void ilu0_decomposition_avx256(BlockedCSR &A)
             int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
-                int j = A.ja[q];
+                int j = A.bcind[q];
 
                 double *block_kj = A.get_block(k, j);
 
@@ -153,18 +153,18 @@ void ilu0_decomposition_avx256(BlockedCSR &A)
                 }
 
                 offsets_i[counter] = q * bs2;
-                offsets_k[counter] = block_kj - A.vals;
+                offsets_k[counter] = block_kj - A.bvals;
 
                 counter++;
 
                 if (counter == batch_size) {
-                    process_blocks_avx256(A.vals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_avx256(A.bvals, block_ik, offsets_i, offsets_k, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_avx256(A.vals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_avx256(A.bvals, block_ik, offsets_i, offsets_k, counter);
             }
         }
     }
@@ -183,17 +183,17 @@ void ilu0_decomposition_avx512(BlockedCSR &A)
     constexpr int batch_size = sizeof(__m512d) / sizeof(double);
 
     for (int i = 1; i < A.nb; i++) {
-        int row_start = A.ia[i];
-        int row_end   = A.ia[i + 1];
+        int row_start = A.brptr[i];
+        int row_end   = A.brptr[i + 1];
 
         for (int p = row_start; p < row_end; p++) {
-            int k = A.ja[p];
+            int k = A.bcind[p];
 
             if (k >= i) {
                 break;
             }
 
-            double *block_ik = &A.vals[(size_t) p * bs2];
+            double *block_ik = &A.bvals[(size_t) p * bs2];
             double *diag_kk  = A.get_block(k, k);
 
             invert_3x3_matrix(inv, diag_kk);
@@ -206,7 +206,7 @@ void ilu0_decomposition_avx512(BlockedCSR &A)
             int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
-                int j = A.ja[q];
+                int j = A.bcind[q];
 
                 double *block_kj = A.get_block(k, j);
 
@@ -215,18 +215,18 @@ void ilu0_decomposition_avx512(BlockedCSR &A)
                 }
 
                 offsets_i[counter] = (int64_t) q * bs2;
-                offsets_k[counter] = block_kj - A.vals;
+                offsets_k[counter] = block_kj - A.bvals;
 
                 counter++;
 
                 if (counter == batch_size) {
-                    process_blocks_avx512(A.vals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_avx512(A.bvals, block_ik, offsets_i, offsets_k, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_avx512(A.vals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_avx512(A.bvals, block_ik, offsets_i, offsets_k, counter);
             }
         }
     }
@@ -246,17 +246,17 @@ void ilu0_decomposition_hwy(BlockedCSR &A)
     const int batch_size = (int) hn::Lanes(d);
 
     for (int i = 1; i < A.nb; i++) {
-        int row_start = A.ia[i];
-        int row_end   = A.ia[i + 1];
+        int row_start = A.brptr[i];
+        int row_end   = A.brptr[i + 1];
 
         for (int p = row_start; p < row_end; p++) {
-            int k = A.ja[p];
+            int k = A.bcind[p];
 
             if (k >= i) {
                 break;
             }
 
-            double *block_ik = &A.vals[(size_t) p * bs2];
+            double *block_ik = &A.bvals[(size_t) p * bs2];
             double *diag_kk  = A.get_block(k, k);
 
             invert_3x3_matrix(inv, diag_kk);
@@ -269,7 +269,7 @@ void ilu0_decomposition_hwy(BlockedCSR &A)
             int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
-                int j = A.ja[q];
+                int j = A.bcind[q];
 
                 double *block_kj = A.get_block(k, j);
 
@@ -278,18 +278,18 @@ void ilu0_decomposition_hwy(BlockedCSR &A)
                 }
 
                 offsets_i[counter] = (int64_t) q * bs2;
-                offsets_k[counter] = block_kj - A.vals;
+                offsets_k[counter] = block_kj - A.bvals;
 
                 counter++;
 
                 if (counter == batch_size) {
-                    process_blocks_hwy(A.vals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_hwy(A.bvals, block_ik, offsets_i, offsets_k, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_hwy(A.vals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_hwy(A.bvals, block_ik, offsets_i, offsets_k, counter);
             }
         }
     }
