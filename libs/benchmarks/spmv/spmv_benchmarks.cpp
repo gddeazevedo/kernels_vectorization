@@ -82,8 +82,8 @@ void SpmvBenchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
         double speedup_mean   = mean_ref   / means[v];
         double speedup_median = median_ref / medians[v];
 
-        gs_mean[v]   += 1.0 / speedup_mean;
-        gs_median[v] += 1.0 / speedup_median;
+        gs_mean[v]   += log(speedup_mean);
+        gs_median[v] += log(speedup_median);
 
         printf("  %-18s %14.6f %11.2fx %14.6f %11.2fx %12.2e\n",
                variants[v].name.c_str(),

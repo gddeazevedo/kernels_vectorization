@@ -109,7 +109,7 @@ int BenchmarkBase::run()
 
     printf("\n");
     print_separator('=', SUMMARY_WIDTH);
-    printf("  Speedup Geral (média harmônica sobre %d malhas)\n", gs_count);
+    printf("  Speedup Geral (média geométrica sobre %d malhas)\n", gs_count);
     print_separator('=', SUMMARY_WIDTH);
     printf("  %-18s %18s %18s\n", "Variante", "Speedup (Mean)", "Speedup (Median)");
     print_separator('-', SUMMARY_WIDTH);
@@ -121,8 +121,8 @@ int BenchmarkBase::run()
     fprintf(speedup_csv, "variante,speedup_geral_mean,speedup_geral_median\n");
 
     for (int v = 0; v < variant_count(); v++) {
-        double speedup_mean   = gs_count / gs_mean[v];
-        double speedup_median = gs_count / gs_median[v];
+        double speedup_mean   = exp(gs_mean[v] / gs_count);
+        double speedup_median = exp(gs_median[v] / gs_count);
 
         printf("  %-18s %17.2fx %17.2fx\n",
                variant_name(v).c_str(),
