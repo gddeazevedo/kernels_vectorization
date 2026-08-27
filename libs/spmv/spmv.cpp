@@ -86,7 +86,7 @@ void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __
     for (int i = 0; i < A.nb * bs; i++) {
         y[i] = 0.0;
     }
-   
+
     for (int row = 0; row < A.nb; row++) {
         int row_start = A.brptr[row];
         int row_end   = A.brptr[row + 1];
