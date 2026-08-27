@@ -52,13 +52,11 @@ void SpmvBenchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
     std::vector<double> medians;
     std::vector<double> errors(variants.size());
 
-    auto prepare = [](int) {};
-
     auto kernel = [&](int v) {
         variants[v].func(A, x, y_test);
     };
 
-    measure_interleaved(prepare, kernel, COOLDOWN_US, means, medians);
+    measure_interleaved(kernel, COOLDOWN_US, means, medians);
 
     for (int v = 0; v < (int)variants.size(); v++) {
         variants[v].func(A, x, y_test);

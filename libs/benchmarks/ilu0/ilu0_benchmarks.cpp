@@ -61,7 +61,7 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
         variants[v].func(A);
     };
 
-    measure_interleaved(prepare, kernel, COOLDOWN_US, means, medians);   // cooldown: deixa o clock recuperar antes da próxima variante
+    measure_interleaved(kernel, COOLDOWN_US, means, medians, prepare);
 
     for (int v = 0; v < (int)variants.size(); v++) {
         memcpy(A.bvals, orig_vals, vals_size);

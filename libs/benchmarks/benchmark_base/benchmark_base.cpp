@@ -10,11 +10,11 @@ BenchmarkBase::BenchmarkBase(int ini, int fim, int inc, int K, const std::string
 }
 
 void BenchmarkBase::measure_interleaved(
-    const std::function<void(int)> &prepare,
     const std::function<void(int)> &kernel,
     useconds_t cooldown_us,
     std::vector<double> &means,
-    std::vector<double> &medians
+    std::vector<double> &medians,
+    const std::function<void(int)> &prepare
 )
 {
     int n_variants = variant_count();

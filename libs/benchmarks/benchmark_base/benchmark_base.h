@@ -24,11 +24,11 @@ class BenchmarkBase
         static constexpr unsigned int SEED = 12345u;
 
         void measure_interleaved(
-            const std::function<void(int)> &prepare,
             const std::function<void(int)> &kernel,
             useconds_t cooldown_us,
             std::vector<double> &means,
-            std::vector<double> &medians
+            std::vector<double> &medians,
+            const std::function<void(int)> &prepare = [](int){}
         );
 
         virtual void evaluate(int nx, int ny, int nz, FILE *runs_csv) = 0;
