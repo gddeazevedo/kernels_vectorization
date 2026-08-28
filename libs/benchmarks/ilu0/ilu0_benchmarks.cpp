@@ -69,6 +69,7 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
 
         double max_err = 0.0;
         int total_vals = A.nnzb * A.bs * A.bs;
+
         for (int i = 0; i < total_vals; i++) {
             double ref = fabs(ref_vals[i]);
             if (ref > 0.0) {
@@ -76,6 +77,7 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
                 if (diff > max_err) max_err = diff;
             }
         }
+
         errors[v] = max_err;
     }
 
