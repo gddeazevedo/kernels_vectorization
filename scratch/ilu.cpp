@@ -92,6 +92,27 @@ ilu_decomposition_t ilu0_decompose(const double **A, int n) {
     return {L, U};
 }
 
+
+void ilu0_decompose_inplace(double **A, int n) {
+    for (int i = 1; i < n; i++) {
+        for (int k = 0; k < i; k++) {
+            if (A[i][k] == 0.0) {
+                continue;
+            }
+
+            A[i][k] = A[i][k] / A[k][k];
+
+            for (int j = k + 1; j < n; j++) {
+                if (A[i][j] == 0.0) {
+                    continue;
+                }
+
+                A[i][j] = A[i][j] - A[i][k] * A[k][j];
+            }
+        }
+    }
+}
+
 double **matmat(double **A, double **B, int n) {
     double **C = new double *[n];
 

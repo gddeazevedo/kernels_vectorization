@@ -20,5 +20,4 @@ void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restric
 void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y);
 void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y);
 void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y);
-void spmv_hwy256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y);
-void spmv_hwy512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y);
+void spmv_hwy(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y);

@@ -1,9 +1,9 @@
-name: vectorization
+name: kernels_vectorization
 
 services:
-  vectorization:
-    image: vectorization:latest
-    container_name: vectorization
+  kernels_vectorization:
+    image: kernels_vectorization:latest
+    container_name: kernels_vectorization
     build: .
     volumes:
       - .:/app

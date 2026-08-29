@@ -3,20 +3,21 @@
 #include <benchmark_base.h>
 #include <spmv.h>
 
-struct MatvecVariant {
+struct SpmvVariant
+{
     const std::string name;
     spmv_func_t func;
 };
 
-class SpmvBenchmark : public BenchmarkBase {
+class SpmvBenchmark : public BenchmarkBase
+{
     private:
-        const std::vector<MatvecVariant> variants = {
+        const std::vector<SpmvVariant> variants = {
             {"Base",        spmv},
             {"OpenMP",      spmv_omp},
             {"AVX256",      spmv_avx256},
             {"AVX512",      spmv_avx512},
-            {"Highway256",  spmv_hwy256},
-            {"Highway512",  spmv_hwy512}
+            {"Highway",     spmv_hwy}
         };
 
         void evaluate(int nx, int ny, int nz, FILE *runs_csv) override;

@@ -1,28 +1,35 @@
 #include <ilu0_benchmarks.h>
 
+
 Ilu0Benchmark::Ilu0Benchmark(int ini, int fim, int inc, int K, const std::string &compiler)
     : BenchmarkBase(ini, fim, inc, K, compiler) {}
 
-const char *Ilu0Benchmark::benchmark_name() const {
+const char *Ilu0Benchmark::benchmark_name() const
+{
     return "ILU0 Benchmark";
 }
 
-const char *Ilu0Benchmark::csv_prefix() const {
+const char *Ilu0Benchmark::csv_prefix() const
+{
     return "ilu0";
 }
 
-int Ilu0Benchmark::variant_count() const {
+int Ilu0Benchmark::variant_count() const
+{
     return (int)variants.size();
 }
 
-const std::string &Ilu0Benchmark::variant_name(int v) const {
+const std::string &Ilu0Benchmark::variant_name(int v) const
+{
     return variants[v].name;
 }
 
-void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv) {
+void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
+{
     int N = nx * ny * nz;
 
     constexpr int TABLE_WIDTH = 92;
+    constexpr useconds_t COOLDOWN_US = 50000;
 
     printf("\n");
     print_separator('=', TABLE_WIDTH);
@@ -36,46 +43,41 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv) {
 
     double *orig_vals = (double *)malloc(vals_size);
     double *ref_vals  = (double *)malloc(vals_size);
-    memcpy(orig_vals, A.vals, vals_size);
+    memcpy(orig_vals, A.bvals, vals_size);
 
     // Resultado de referência (variante base)
     ilu0_decomposition(A);
-    memcpy(ref_vals, A.vals, vals_size);
-
-    double *sample = (double *)malloc(K * sizeof(double));
+    memcpy(ref_vals, A.bvals, vals_size);
 
     std::vector<double> means(variants.size());
     std::vector<double> medians(variants.size());
     std::vector<double> errors(variants.size());
 
+    auto prepare = [&](int) {
+        memcpy(A.bvals, orig_vals, vals_size);
+    };
+
+    auto kernel = [&](int v) {
+        variants[v].func(A);
+    };
+
+    measure_interleaved(kernel, COOLDOWN_US, means, medians, prepare);
+
     for (int v = 0; v < (int)variants.size(); v++) {
-        double sum = 0.0;
-
-        for (int i = 0; i < 5; i++) {
-            memcpy(A.vals, orig_vals, vals_size);
-            variants[v].func(A);
-        }
-
-        for (int k = 0; k < K; k++) {
-            memcpy(A.vals, orig_vals, vals_size);
-            double t0 = wtime();
-            variants[v].func(A);
-            sample[k] = wtime() - t0;
-            sum += sample[k];
-        }
-
-        means[v]   = sum / K;
-        medians[v] = median(sample, K);
+        memcpy(A.bvals, orig_vals, vals_size);
+        variants[v].func(A);
 
         double max_err = 0.0;
         int total_vals = A.nnzb * A.bs * A.bs;
+
         for (int i = 0; i < total_vals; i++) {
             double ref = fabs(ref_vals[i]);
             if (ref > 0.0) {
-                double diff = fabs(ref_vals[i] - A.vals[i]) / ref;
+                double diff = fabs(ref_vals[i] - A.bvals[i]) / ref;
                 if (diff > max_err) max_err = diff;
             }
         }
+
         errors[v] = max_err;
     }
 
@@ -90,8 +92,8 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv) {
         double speedup_mean   = mean_ref   / means[v];
         double speedup_median = median_ref / medians[v];
 
-        gs_mean[v]   += 1.0 / speedup_mean;
-        gs_median[v] += 1.0 / speedup_median;
+        gs_mean[v]   += log(speedup_mean);
+        gs_median[v] += log(speedup_median);
 
         printf("  %-18s %14.6f %11.2fx %14.6f %11.2fx %12.2e\n",
                variants[v].name.c_str(),
@@ -113,7 +115,6 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv) {
 
     gs_count++;
 
-    free(sample);
     free(orig_vals);
     free(ref_vals);
 }

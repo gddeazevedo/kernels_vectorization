@@ -1,6 +1,7 @@
 #include <spmv.h>
 
-void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -8,15 +9,15 @@ void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restric
     }
 
     for (int row = 0; row < A.nb; row++) {
-        int row_start = A.ia[row];
-        int row_end   = A.ia[row + 1];
+        int row_start = A.brptr[row];
+        int row_end   = A.brptr[row + 1];
 
         double *yrow = &y[row * bs];
 
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            int block_col = A.ja[block_idx];
+            int block_col = A.bcind[block_idx];
 
-            const double *block = &A.vals[block_idx * bs * bs];
+            const double *block = &A.bvals[block_idx * bs * bs];
             const double *xcol  = &x[block_col * bs];
 
             yrow[0] += block[0]*xcol[0] + block[1]*xcol[1] + block[2]*xcol[2];
@@ -26,7 +27,8 @@ void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restric
     }
 }
 
-void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -34,8 +36,8 @@ void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __res
     }
 
     for (int row = 0; row < A.nb; row++) {
-        int row_start = A.ia[row];
-        int row_end   = A.ia[row + 1];
+        int row_start = A.brptr[row];
+        int row_end   = A.brptr[row + 1];
 
         double *yrow = &y[row * bs];
 
@@ -45,9 +47,9 @@ void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __res
 
         #pragma omp simd reduction(+:y0,y1,y2)
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            int block_col = A.ja[block_idx];
+            int block_col = A.bcind[block_idx];
 
-            const double *block = &A.vals[block_idx * bs * bs];
+            const double *block = &A.bvals[block_idx * bs * bs];
             const double *xcol  = &x[block_col * bs];
 
             y0 += block[0]*xcol[0] + block[1]*xcol[1] + block[2]*xcol[2];
@@ -61,7 +63,8 @@ void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __res
     }
 }
 
-static double hadd_256(__m256d v) {
+static double hadd_256(__m256d v)
+{
     __m256d zero = _mm256_setzero_pd();
 
     // v_mod = [v0, v1, v2, 0.0]
@@ -76,16 +79,17 @@ static double hadd_256(__m256d v) {
     return _mm_cvtsd_f64(final_sum);
 }
 
-void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
         y[i] = 0.0;
     }
-   
+
     for (int row = 0; row < A.nb; row++) {
-        int row_start = A.ia[row];
-        int row_end   = A.ia[row + 1];
+        int row_start = A.brptr[row];
+        int row_end   = A.brptr[row + 1];
 
         double *yrow = &y[(size_t)row * bs];
 
@@ -94,9 +98,9 @@ void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __
         __m256d y2 = _mm256_setzero_pd();
 
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            int block_col = A.ja[block_idx];
+            int block_col = A.bcind[block_idx];
 
-            const double *block = &A.vals[(size_t)block_idx * bs * bs];
+            const double *block = &A.bvals[(size_t)block_idx * bs * bs];
             const double *xcol  = &x[(size_t)block_col * bs];
 
             __m256d vx = _mm256_loadu_pd(xcol);
@@ -118,7 +122,8 @@ void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __
 }
 
 
-void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     int bs = A.bs;
 
     for (int i = 0; i < A.nb * bs; i++) {
@@ -130,8 +135,8 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
     const __m512i perm_idx = _mm512_set_epi64(1, 0, 2, 1, 0, 2, 1, 0);
 
     for (int row = 0; row < A.nb; row++) {
-        int row_start = A.ia[row];
-        int row_end   = A.ia[row + 1];
+        int row_start = A.brptr[row];
+        int row_end   = A.brptr[row + 1];
 
         double *yrow = &y[(size_t)row * bs];
 
@@ -139,8 +144,8 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
         double y2_extra = 0.0;
 
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            int block_col = A.ja[block_idx];
-            const double *block = &A.vals[(size_t)block_idx * bs * bs];
+            int block_col = A.bcind[block_idx];
+            const double *block = &A.bvals[(size_t)block_idx * bs * bs];
             const double *xcol = &x[(size_t)block_col * bs];
 
             __m512d vb = _mm512_loadu_pd(block);  // Carrega 8 elementos do bloco
@@ -160,34 +165,37 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
     }
 }
 
-void spmv_hwy256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
+void spmv_hwy(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+{
     const int bs = A.bs;
 
-    const hn::FixedTag<double, 4> d;  // 256-bit fixo: 4 lanes
-    const auto m3 = hn::FirstN(d, 3);
+    const hn::CappedTag<double, 4> d;
+    const auto m3 = hn::FirstN(d, bs);
 
     for (int i = 0; i < A.nb * bs; i++) {
         y[i] = 0.0;
     }
 
     for (int row = 0; row < A.nb; row++) {
-        const int row_start = A.ia[row];
-        const int row_end   = A.ia[row + 1];
-        double* yrow = &y[(size_t)row * bs];
+        const int row_start = A.brptr[row];
+        const int row_end   = A.brptr[row + 1];
+
+        double *yrow = &y[(size_t) row * bs];
 
         auto y0 = hn::Zero(d);
         auto y1 = hn::Zero(d);
         auto y2 = hn::Zero(d);
 
         for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            const int block_col = A.ja[block_idx];
-            const double* block = &A.vals[(size_t)block_idx * bs * bs];
-            const double* xcol  = &x[(size_t)block_col * bs];
+            const int block_col = A.bcind[block_idx];
 
-            auto vx  = hn::MaskedLoad(m3, d, xcol);
-            auto vb0 = hn::MaskedLoad(m3, d, block);
-            auto vb1 = hn::MaskedLoad(m3, d, block + 3);
-            auto vb2 = hn::MaskedLoad(m3, d, block + 6);
+            const double *block = &A.bvals[(size_t)block_idx * bs * bs];
+            const double *xcol  = &x[(size_t)block_col * bs];
+
+            const auto vx  = hn::MaskedLoad(m3, d, xcol);
+            const auto vb0 = hn::MaskedLoad(m3, d, block);
+            const auto vb1 = hn::MaskedLoad(m3, d, block + 3);
+            const auto vb2 = hn::MaskedLoad(m3, d, block + 6);
 
             y0 = hn::MulAdd(vb0, vx, y0);
             y1 = hn::MulAdd(vb1, vx, y1);
@@ -197,52 +205,5 @@ void spmv_hwy256(const BlockedCSR &A, const double * __restrict__ x, double * __
         yrow[0] = hn::ReduceSum(d, y0);
         yrow[1] = hn::ReduceSum(d, y1);
         yrow[2] = hn::ReduceSum(d, y2);
-    }
-}
-
-void spmv_hwy512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y) {
-    int bs = A.bs;
-
-    const hn::FixedTag<double, 8> d;
-    const hn::Rebind<int64_t, decltype(d)> di;
-
-    HWY_ALIGN const int64_t perm_lanes[8] = {0,1,2, 0,1,2, 0,1};
-    const auto perm_idx = hn::IndicesFromVec(d, hn::Load(di, perm_lanes));
-
-    for (int i = 0; i < A.nb * bs; i++) {
-        y[i] = 0.0;
-    }
-
-    for (int row = 0; row < A.nb; row++) {
-        int row_start = A.ia[row];
-        int row_end   = A.ia[row + 1];
-
-        double *yrow = &y[(size_t) row * bs];
-
-        auto acc = hn::Set(d, 0.0);
-        double y2_extra = 0.0;
-
-        for (int block_idx = row_start; block_idx < row_end; block_idx++) {
-            int block_col = A.ja[block_idx];
-
-            const double *block = &A.vals[(size_t)block_idx * bs * bs];
-            const double *xcol  = &x[(size_t)block_col * bs];
-
-            auto v_block    = hn::LoadU(d, block);
-            auto v_xcol_raw = hn::LoadU(d, xcol);
-            auto v_xcol     = hn::TableLookupLanes(v_xcol_raw, perm_idx);
-
-            acc = hn::MulAdd(v_block, v_xcol, acc);
-            y2_extra += block[8] * xcol[2];
-        }
-
-        const auto m_first_3 = hn::FirstN(d, 3);
-        const auto m_first_6 = hn::FirstN(d, 6);
-        const auto m_mid_3   = hn::AndNot(m_first_3, m_first_6);
-        const auto m_last_2  = hn::Not(m_first_6);
-
-        yrow[0] = hn::MaskedReduceSum(d, m_first_3, acc);
-        yrow[1] = hn::MaskedReduceSum(d, m_mid_3,   acc);
-        yrow[2] = hn::MaskedReduceSum(d, m_last_2,  acc) + y2_extra;
     }
 }
