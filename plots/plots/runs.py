@@ -1,6 +1,11 @@
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 
 from plots.style import COLORS, MARKERS
+
+
+def formata_milhar(valor, _pos):
+    return f"{int(valor):,}".replace(",", ".")
 
 
 def plot_tempos(df, metric, title, filename):
@@ -17,6 +22,8 @@ def plot_tempos(df, metric, title, filename):
             linewidth=2,
             markersize=6,
         )
+
+    ax.xaxis.set_major_formatter(FuncFormatter(formata_milhar))
 
     ax.set_xlabel("N (dimensão da matriz)", fontsize=12)
     ax.set_ylabel("Tempo (s)", fontsize=12)
