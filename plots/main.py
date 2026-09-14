@@ -3,7 +3,7 @@ import os
 import sys
 import pandas as pd
 from plots.speedup import plot_speedup, plot_speedup_general, plot_compiler_comparison
-from plots.tempos import plot_tempos
+from plots.runs import plot_runs_metric
 
 
 def operation_config(name, label):
@@ -25,8 +25,25 @@ def operation_config(name, label):
         "time_plots": [
             {
                 "metric": "media_s",
+                "ylabel": "Tempo (s)",
                 "title": f"{label} — Tempo Médio por Variante",
                 "filename": f"{name}_tempo_mean.png",
+            },
+            {
+                "metric": "mediana_s",
+                "ylabel": "Tempo (s)",
+                "title": f"{label} — Mediana do Tempo por Variante",
+                "filename": f"{name}_tempo_median.png",
+            },
+        ],
+        "error_plots": [
+            {
+                "metric": "erro_max",
+                "ylabel": "Erro máximo",
+                "title": f"{label} — Erro Máximo por Variante",
+                "filename": f"{name}_erro_max.png",
+                "vary_linestyle": True,
+                "sci_yticks": True,
             },
         ],
         "general_plot": {
@@ -93,9 +110,21 @@ def generate_per_compiler_plots(compiler_path, compiler, config, only_tempos=Fal
                 plot_speedup(df_runs, plot["metric"], plot["title"] + suffix, out)
                 print(f"    -> {out}")
 
-        for plot in config["time_plots"]:
+        runs_plots = list(config["time_plots"])
+        if not only_tempos:
+            runs_plots += config["error_plots"]
+
+        for plot in runs_plots:
             out = os.path.join(compiler_path, plot["filename"])
-            plot_tempos(df_runs, plot["metric"], plot["title"] + suffix, out)
+            plot_runs_metric(
+                df_runs,
+                plot["metric"],
+                plot["ylabel"],
+                plot["title"] + suffix,
+                out,
+                vary_linestyle=plot.get("vary_linestyle", False),
+                sci_yticks=plot.get("sci_yticks", False),
+            )
             print(f"    -> {out}")
     else:
         print(f"    Aviso: {runs_csv} não encontrado")

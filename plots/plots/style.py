@@ -12,3 +12,7 @@ COMPILER_COLORS = {
 }
 
 MARKERS = ["o", "s", "^", "D", "X", "P", "v", "<", ">", "h"]
+
+# Variantes com valores idênticos (erro_max = 0, por exemplo) se sobrepõem no
+# gráfico; o estilo de linha mantém todas visíveis.
+LINESTYLES = ["-", "--", "-.", ":", (0, (3, 1, 1, 1))]

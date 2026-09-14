@@ -73,6 +73,8 @@ exceto os de comparação entre compiladores, que ficam em `experiments/<operaca
 - `<op>_speedup_median.png` — mediana do speedup por variante em função de N
 - `<op>_speedup_general.png` — speedup geral (média e mediana) por variante (barras)
 - `<op>_tempo_mean.png` — tempo médio (s) por variante em função de N
+- `<op>_tempo_median.png` — mediana do tempo (s) por variante em função de N
+- `<op>_erro_max.png` — erro máximo por variante em função de N
 - `<op>_comparison_mean.png` — comparação do speedup médio geral entre GCC e ICX (barras)
 - `<op>_comparison_median.png` — comparação da mediana do speedup geral entre GCC e ICX (barras)
 
