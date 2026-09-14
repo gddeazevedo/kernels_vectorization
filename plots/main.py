@@ -3,6 +3,7 @@ import os
 import sys
 import pandas as pd
 from plots.speedup import plot_speedup, plot_speedup_general, plot_compiler_comparison
+from plots.tempos import plot_tempos
 
 
 def operation_config(name, label):
@@ -19,6 +20,13 @@ def operation_config(name, label):
                 "metric": "speedup_median",
                 "title": f"{label} — Mediana do Speedup por Variante",
                 "filename": f"{name}_speedup_median.png",
+            },
+        ],
+        "time_plots": [
+            {
+                "metric": "media_s",
+                "title": f"{label} — Tempo Médio por Variante",
+                "filename": f"{name}_tempo_mean.png",
             },
         ],
         "general_plot": {
@@ -71,19 +79,29 @@ def compiler_label(compiler):
     return COMPILER_LABELS.get(compiler, compiler.upper())
 
 
-def generate_per_compiler_plots(compiler_path, compiler, config):
+def generate_per_compiler_plots(compiler_path, compiler, config, only_tempos=False):
     compiler_general_df = None
     suffix = f" ({compiler_label(compiler)})"
 
     runs_csv = os.path.join(compiler_path, config["runs_csv"])
     if os.path.isfile(runs_csv):
         df_runs = pd.read_csv(runs_csv)
-        for plot in config["plots"]:
+
+        if not only_tempos:
+            for plot in config["plots"]:
+                out = os.path.join(compiler_path, plot["filename"])
+                plot_speedup(df_runs, plot["metric"], plot["title"] + suffix, out)
+                print(f"    -> {out}")
+
+        for plot in config["time_plots"]:
             out = os.path.join(compiler_path, plot["filename"])
-            plot_speedup(df_runs, plot["metric"], plot["title"] + suffix, out)
+            plot_tempos(df_runs, plot["metric"], plot["title"] + suffix, out)
             print(f"    -> {out}")
     else:
         print(f"    Aviso: {runs_csv} não encontrado")
+
+    if only_tempos:
+        return None
 
     general_csv = os.path.join(compiler_path, config["general_csv"])
     if os.path.isfile(general_csv):
@@ -115,7 +133,7 @@ def generate_comparison_plots(base_dir, config, compiler_general_data):
         print(f"    -> {out}")
 
 
-def generate_plots(operation):
+def generate_plots(operation, only_tempos=False):
     config   = OPERATIONS[operation]
     base_dir = resolve_base_dir(operation)
 
@@ -138,7 +156,7 @@ def generate_plots(operation):
             continue
 
         print(f"  Gerando gráficos para {compiler}")
-        df_general = generate_per_compiler_plots(compiler_path, compiler, config)
+        df_general = generate_per_compiler_plots(compiler_path, compiler, config, only_tempos)
         if df_general is not None:
             compiler_general_data[compiler] = df_general
 
@@ -147,16 +165,21 @@ def generate_plots(operation):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Geração de gráficos de speedup")
+    parser = argparse.ArgumentParser(description="Geração de gráficos dos experimentos")
     parser.add_argument(
         "operation",
         choices=OPERATIONS.keys(),
         help="Operação para gerar gráficos (spmv ou ilu0)",
     )
+    parser.add_argument(
+        "--tempos",
+        action="store_true",
+        help="Gerar somente os gráficos de tempo por variante",
+    )
     args = parser.parse_args()
 
     print(f"Gerando gráficos para: {args.operation}")
-    generate_plots(args.operation)
+    generate_plots(args.operation, args.tempos)
 
 
 if __name__ == "__main__":

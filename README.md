@@ -47,27 +47,34 @@ make icx spmv    # compila com icpx e roda benchmark SpMV
 
 ## Gerar gráficos
 
-Após rodar os benchmarks, gere os gráficos de speedup com o CLI:
+Após rodar os benchmarks, gere os gráficos com o CLI:
 
 ```bash
 pip install pandas matplotlib --break-system-packages
-python3 main.py <operacao>
+python3 main.py <operacao> [--tempos]
 ```
+
+Sem `--tempos`, todos os gráficos são gerados. Com `--tempos`, apenas os gráficos de tempo.
 
 ### Exemplos
 
 ```bash
-python3 main.py spmv    # gera gráficos de speedup do SpMV
-python3 main.py ilu     # gera gráficos de speedup do ILU
+python3 main.py spmv             # gera todos os gráficos do SpMV
+python3 main.py ilu0             # gera todos os gráficos do ILU0
+python3 main.py spmv --tempos    # gera somente os gráficos de tempo do SpMV
 ```
 
-Os gráficos são salvos em `experiments/<operacao>/<compilador>/` junto aos CSVs correspondentes.
+Os gráficos são salvos em `experiments/<operacao>/<compilador>/` junto aos CSVs correspondentes,
+exceto os de comparação entre compiladores, que ficam em `experiments/<operacao>/`.
 
 ### Gráficos gerados por operação
 
 - `<op>_speedup_mean.png` — speedup médio por variante em função de N
 - `<op>_speedup_median.png` — mediana do speedup por variante em função de N
 - `<op>_speedup_general.png` — speedup geral (média e mediana) por variante (barras)
+- `<op>_tempo_mean.png` — tempo médio (s) por variante em função de N
+- `<op>_comparison_mean.png` — comparação do speedup médio geral entre GCC e ICX (barras)
+- `<op>_comparison_median.png` — comparação da mediana do speedup geral entre GCC e ICX (barras)
 
 ## Estrutura
 

@@ -1,26 +1,11 @@
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-
-COLORS = {
-    "Base":    "#6c757d",
-    "OpenMP":  "#dc3545",
-    "AVX256":  "#6610f2",
-    "AVX512":  "#fd7e14",
-    "Highway": "#17E110"
-}
-
-COMPILER_COLORS = {
-    "gcc": "#4285F4",
-    "icx": "#EA4335",
-}
+from plots.style import COLORS, COMPILER_COLORS, MARKERS
 
 
 def plot_speedup(df, metric, title, filename):
     _, ax = plt.subplots(figsize=(10, 6))
-
-    markers = ["o", "s", "^", "D", "X", "P", "v", "<", ">", "h"]
 
     for i, variante in enumerate(df["variante"].unique()):
         subset = df[df["variante"] == variante].sort_values("N")
@@ -29,7 +14,7 @@ def plot_speedup(df, metric, title, filename):
             subset[metric],
             label=variante,
             color=COLORS.get(variante, None),
-            marker=markers[i % len(markers)],
+            marker=MARKERS[i % len(MARKERS)],
             linewidth=2,
             markersize=6,
         )
