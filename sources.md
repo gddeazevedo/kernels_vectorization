@@ -12,3 +12,8 @@
 - [Memory Access Patterns](https://www.abhik.ai/concepts/systems/memory-access-patterns)
 - [CPU Cache Lines](https://www.abhik.ai/concepts/systems/cpu-cache-lines)
 - [Understanding Stencils: The Heart of Scientific Computing](https://medium.com/@thisara.weerakoon2001/understanding-stencils-the-heart-of-scientific-computing-afad81e7db57)
+- [Algoritmica](https://en.algorithmica.org/hpc/)
+- [Cache Associativity](https://en.algorithmica.org/hpc/cpu-cache/associativity/)
+- [Cache Lines](https://en.algorithmica.org/hpc/cpu-cache/cache-lines)
+- [Eviction Policies](https://en.algorithmica.org/hpc/external-memory/policies/)
+- [Cache Eviction](https://dev.to/nk_sk_6f24fdd730188b284bf/advanced-cache-systems-write-policies-eviction-strategies-invalidation-and-coherence-protocols-1mfg)
