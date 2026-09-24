@@ -167,7 +167,7 @@ void matmat_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2])
 {
     for (int row = 0; row < BS; row++) {
         for (int col = 0; col < BS; col++) {
-            __m256d acc = _mm256_mul_pd  (A[idx(row, 0)], B[idx(0, col)]);
+            __m256d acc = _mm256_mul_pd(A[idx(row, 0)], B[idx(0, col)]);
             acc         = _mm256_fmadd_pd(A[idx(row, 1)], B[idx(1, col)], acc);
             acc         = _mm256_fmadd_pd(A[idx(row, 2)], B[idx(2, col)], acc);
             dst[idx(row, col)] = acc;
