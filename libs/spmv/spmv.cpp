@@ -1,6 +1,6 @@
 #include <spmv.h>
 
-void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+void spmv(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y)
 {
     int bs = A.bs;
 
@@ -27,7 +27,7 @@ void spmv(const BlockedCSR &A, const double * __restrict__ x, double * __restric
     }
 }
 
-void spmv_omp(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+void spmv_omp(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y)
 {
     int bs = A.bs;
 
@@ -79,7 +79,7 @@ static double hadd_256(__m256d v)
     return _mm_cvtsd_f64(final_sum);
 }
 
-void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+void spmv_avx256(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y)
 {
     int bs = A.bs;
 
@@ -122,7 +122,7 @@ void spmv_avx256(const BlockedCSR &A, const double * __restrict__ x, double * __
 }
 
 
-void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+void spmv_avx512(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y)
 {
     int bs = A.bs;
 
@@ -165,7 +165,7 @@ void spmv_avx512(const BlockedCSR &A, const double * __restrict__ x, double * __
     }
 }
 
-void spmv_hwy(const BlockedCSR &A, const double * __restrict__ x, double * __restrict__ y)
+void spmv_hwy(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y)
 {
     const int bs = A.bs;
 

@@ -1,6 +1,6 @@
 #include <bcsr.h>
 
-BlockedCSR::BlockedCSR(int nb, int bs, int max_nblocks)
+BlockCSR::BlockCSR(int nb, int bs, int max_nblocks)
 {
     this->nnzb  = 0;
     this->nb    = nb;
@@ -17,14 +17,14 @@ BlockedCSR::BlockedCSR(int nb, int bs, int max_nblocks)
     this->brptr[0] = 0;
 }
 
-BlockedCSR::~BlockedCSR()
+BlockCSR::~BlockCSR()
 {
     free(this->brptr);
     free(this->bcind);
     free(this->bvals);
 }
 
-BlockedCSR::BlockedCSR(BlockedCSR &&other) noexcept
+BlockCSR::BlockCSR(BlockCSR &&other) noexcept
     : nb(other.nb), bs(other.bs), nnzb(other.nnzb),
       brptr(other.brptr), bcind(other.bcind), bvals(other.bvals)
 {
@@ -33,7 +33,7 @@ BlockedCSR::BlockedCSR(BlockedCSR &&other) noexcept
     other.bvals = nullptr;
 }
 
-BlockedCSR &BlockedCSR::operator=(BlockedCSR &&other) noexcept
+BlockCSR &BlockCSR::operator=(BlockCSR &&other) noexcept
 {
     if (this != &other) {
         free(this->brptr);
@@ -54,13 +54,13 @@ BlockedCSR &BlockedCSR::operator=(BlockedCSR &&other) noexcept
     return *this;
 }
 
-void BlockedCSR::shrink_to_fit()
+void BlockCSR::shrink_to_fit()
 {
     this->bcind = (int *) realloc(this->bcind, this->nnzb * sizeof(int));
     this->bvals = (double *) realloc(this->bvals, this->nnzb * this->bs * this->bs * sizeof(double));
 }
 
-void BlockedCSR::push_block(int row, int col, const double *block)
+void BlockCSR::push_block(int row, int col, const double *block)
 {
     int pos = this->nnzb;
     this->bcind[pos] = col;
@@ -69,7 +69,7 @@ void BlockedCSR::push_block(int row, int col, const double *block)
     this->brptr[row + 1] = this->nnzb;
 }
 
-void BlockedCSR::draw() const
+void BlockCSR::draw() const
 {
     for(int i = 0; i < this->nb; i++) {
         for(int j = 0; j < this->nb; j++) {
@@ -94,7 +94,7 @@ void BlockedCSR::draw() const
     }
 }
 
-double *BlockedCSR::get_block(const int row, const int col)
+double *BlockCSR::get_block(const int row, const int col)
 {
     int row_start = this->brptr[row];
     int row_end   = this->brptr[row + 1];
@@ -114,12 +114,12 @@ double *BlockedCSR::get_block(const int row, const int col)
     return nullptr;
 }
 
-BlockedCSR BlockedCSR::generate_blocked27_3x3(int nx, int ny, int nz)
+BlockCSR BlockCSR::generate_blocked27_3x3(int nx, int ny, int nz)
 {
     int N = nx * ny * nz;
     int bs = 3;
     int max_blocks = N * 27;
-    BlockedCSR A(N, bs, max_blocks);
+    BlockCSR A(N, bs, max_blocks);
 
     int nnz_count = 0;
     for (int k = 0; k < nz; k++) {

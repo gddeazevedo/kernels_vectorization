@@ -36,7 +36,7 @@ void SpmvBenchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
            nx, ny, nz, N, 3*N, K);
     print_separator('=', TABLE_WIDTH);
 
-    BlockedCSR A = BlockedCSR::generate_blocked27_3x3(nx, ny, nz);
+    BlockCSR A = BlockCSR::generate_blocked27_3x3(nx, ny, nz);
 
     double *x      = (double *)malloc((size_t)3 * N * sizeof(double));
     double *y_ref  = (double *)malloc((size_t)3 * N * sizeof(double));

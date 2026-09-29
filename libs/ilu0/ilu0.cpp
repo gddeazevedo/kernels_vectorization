@@ -1,6 +1,6 @@
 #include <ilu0.h>
 
-void ilu0_decomposition(BlockedCSR &A)
+void ilu0_decomposition(BlockCSR &A)
 {
     int bs2 = A.bs * A.bs;
 
@@ -51,7 +51,7 @@ void ilu0_decomposition(BlockedCSR &A)
     free(inv);
 }
 
-void ilu0_decomposition_omp(BlockedCSR &A)
+void ilu0_decomposition_omp(BlockCSR &A)
 {
     int bs2 = A.bs * A.bs;
 
@@ -111,7 +111,7 @@ void ilu0_decomposition_omp(BlockedCSR &A)
     free(inv);
 }
 
-void ilu0_decomposition_avx256(BlockedCSR &A)
+void ilu0_decomposition_avx256(BlockCSR &A)
 {
     int bs2 = A.bs * A.bs;
 
@@ -173,7 +173,7 @@ void ilu0_decomposition_avx256(BlockedCSR &A)
     free(inv);
 }
 
-void ilu0_decomposition_avx512(BlockedCSR &A)
+void ilu0_decomposition_avx512(BlockCSR &A)
 {
     int bs2 = A.bs * A.bs;
 
@@ -235,7 +235,7 @@ void ilu0_decomposition_avx512(BlockedCSR &A)
     free(inv);
 }
 
-void ilu0_decomposition_hwy(BlockedCSR &A)
+void ilu0_decomposition_hwy(BlockCSR &A)
 {
     int bs2 = A.bs * A.bs;
 

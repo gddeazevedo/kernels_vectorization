@@ -37,7 +37,7 @@ void Ilu0Benchmark::evaluate(int nx, int ny, int nz, FILE *runs_csv)
            nx, ny, nz, N, 3*N, K);
     print_separator('=', TABLE_WIDTH);
 
-    BlockedCSR A = BlockedCSR::generate_blocked27_3x3(nx, ny, nz);
+    BlockCSR A = BlockCSR::generate_blocked27_3x3(nx, ny, nz);
 
     size_t vals_size = (size_t)A.nnzb * A.bs * A.bs * sizeof(double);
 
