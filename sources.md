@@ -17,3 +17,5 @@
 - [Cache Lines](https://en.algorithmica.org/hpc/cpu-cache/cache-lines)
 - [Eviction Policies](https://en.algorithmica.org/hpc/external-memory/policies/)
 - [Cache Eviction](https://dev.to/nk_sk_6f24fdd730188b284bf/advanced-cache-systems-write-policies-eviction-strategies-invalidation-and-coherence-protocols-1mfg)
+- [BSR Matrix Scipy](https://scipy-lectures.org/advanced/scipy_sparse/bsr_matrix.html)
+- [BSR oneMKL](https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-dpcpp/2026-0/block-compressed-sparse-row-bsr.html)
