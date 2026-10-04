@@ -48,8 +48,8 @@ void gather_blocks_omp(
     int n_blocks
 )
 {
-    for (int reg = 0; reg < BS2; reg++) {
-        for (int l = 0; l < n_blocks; l++) {
+    for (int l = 0; l < n_blocks; l++) {
+        for (int reg = 0; reg < BS2; reg++) {
             dst[reg][l] = blocks[offsets[l] + reg];
         }
     }
@@ -62,8 +62,8 @@ void scatter_blocks_omp(
     int n_blocks
 )
 {
-    for (int reg = 0; reg < BS2; reg++) {
-        for (int l = 0; l < n_blocks; l++) {
+    for (int l = 0; l < n_blocks; l++) {
+        for (int reg = 0; reg < BS2; reg++) {
             blocks[offsets[l] + reg] = src[reg][l];
         }
     }
@@ -153,11 +153,11 @@ void scatter_blocks_avx256(
     int n_blocks
 )
 {
-    for (int reg = 0; reg < BS2; reg++) {
-        double tmp[4];
-        _mm256_storeu_pd(tmp, src[reg]);
+    for (int l = 0; l < n_blocks; l++) {
+        for (int reg = 0; reg < BS2; reg++) {
+            double tmp[4];
+            _mm256_storeu_pd(tmp, src[reg]);
 
-        for (int l = 0; l < n_blocks; l++) {
             blocks[offsets[l] + reg] = tmp[l];
         }
     }
