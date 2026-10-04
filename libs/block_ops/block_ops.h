@@ -13,10 +13,10 @@ namespace hn = hwy::HWY_NAMESPACE;
 #define BS2 (BS * BS)
 #define idx(i,j) ((i)*BS + (j))
 
-using HwyTag  = hn::ScalableTag<double>;
-using HwyTagI = hn::Rebind<int64_t, HwyTag>;
+using HwyTagD  = hn::ScalableTag<double>;
+using HwyTagI = hn::Rebind<int64_t, HwyTagD>;
 
-#define HWY_BATCH_MAX HWY_MAX_LANES_D(HwyTag)
+#define HWY_BATCH_MAX HWY_MAX_LANES_D(HwyTagD)
 
 void invert_3x3_matrix(double *dst, const double *M);
 void matmat(double *dst, const double *A, const double *B);
@@ -97,26 +97,26 @@ void process_blocks_avx512(
 );
 
 void gather_blocks_hwy(
-    hn::Vec<HwyTag> dst[BS2],
+    hn::Vec<HwyTagD> dst[BS2],
     const double *blocks,
     hn::Vec<HwyTagI> offsets,
-    hn::Mask<HwyTag> mask
+    hn::Mask<HwyTagD> mask
 );
 void scatter_blocks_hwy(
     double *blocks,
-    const hn::Vec<HwyTag> src[BS2],
+    const hn::Vec<HwyTagD> src[BS2],
     hn::Vec<HwyTagI> offsets,
-    hn::Mask<HwyTag> mask
+    hn::Mask<HwyTagD> mask
 );
 void matmat_hwy(
-    hn::Vec<HwyTag> dst[BS2],
-    const hn::Vec<HwyTag> A[BS2],
-    const hn::Vec<HwyTag> B[BS2]
+    hn::Vec<HwyTagD> dst[BS2],
+    const hn::Vec<HwyTagD> A[BS2],
+    const hn::Vec<HwyTagD> B[BS2]
 );
 void matsub_hwy(
-    hn::Vec<HwyTag> dst[BS2],
-    const hn::Vec<HwyTag> A[BS2],
-    const hn::Vec<HwyTag> B[BS2]
+    hn::Vec<HwyTagD> dst[BS2],
+    const hn::Vec<HwyTagD> A[BS2],
+    const hn::Vec<HwyTagD> B[BS2]
 );
 void process_blocks_hwy(
     double *blocks,

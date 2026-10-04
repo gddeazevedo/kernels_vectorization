@@ -242,7 +242,7 @@ void ilu0_decomposition_hwy(BlockCSR &A)
     double *prod = (double *) calloc(bs2, sizeof(double));
     double *inv  = (double *) calloc(bs2, sizeof(double));
 
-    const HwyTag d;
+    const HwyTagD d;
     const int batch_size = (int) hn::Lanes(d);
 
     for (int i = 1; i < A.nb; i++) {

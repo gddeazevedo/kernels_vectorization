@@ -294,13 +294,13 @@ void process_blocks_avx512(
 }
 
 void gather_blocks_hwy(
-    hn::Vec<HwyTag> dst[BS2],
+    hn::Vec<HwyTagD> dst[BS2],
     const double *blocks,
     hn::Vec<HwyTagI> offsets,
-    hn::Mask<HwyTag> mask
+    hn::Mask<HwyTagD> mask
 )
 {
-    const HwyTag  d;
+    const HwyTagD  d;
     const HwyTagI di;
 
     const auto zeros = hn::Zero(d);
@@ -313,12 +313,12 @@ void gather_blocks_hwy(
 
 void scatter_blocks_hwy(
     double *blocks,
-    const hn::Vec<HwyTag> src[BS2],
+    const hn::Vec<HwyTagD> src[BS2],
     hn::Vec<HwyTagI> offsets,
-    hn::Mask<HwyTag> mask
+    hn::Mask<HwyTagD> mask
 )
 {
-    const HwyTag  d;
+    const HwyTagD  d;
     const HwyTagI di;
 
     for (int reg = 0; reg < BS2; reg++) {
@@ -328,9 +328,9 @@ void scatter_blocks_hwy(
 }
 
 void matmat_hwy(
-    hn::Vec<HwyTag> dst[BS2],
-    const hn::Vec<HwyTag> A[BS2],
-    const hn::Vec<HwyTag> B[BS2]
+    hn::Vec<HwyTagD> dst[BS2],
+    const hn::Vec<HwyTagD> A[BS2],
+    const hn::Vec<HwyTagD> B[BS2]
 )
 {
     for (int row = 0; row < BS; row++) {
@@ -344,9 +344,9 @@ void matmat_hwy(
 }
 
 void matsub_hwy(
-    hn::Vec<HwyTag> dst[BS2],
-    const hn::Vec<HwyTag> A[BS2],
-    const hn::Vec<HwyTag> B[BS2]
+    hn::Vec<HwyTagD> dst[BS2],
+    const hn::Vec<HwyTagD> A[BS2],
+    const hn::Vec<HwyTagD> B[BS2]
 )
 {
     for (int reg = 0; reg < BS2; reg++) {
@@ -362,7 +362,7 @@ void process_blocks_hwy(
     int n_blocks
 )
 {
-    const HwyTag  d;
+    const HwyTagD  d;
     const HwyTagI di;
 
     auto mask = hn::FirstN(d, n_blocks);
@@ -370,11 +370,11 @@ void process_blocks_hwy(
     auto voffsets_i = hn::LoadU(di, offsets_i);
     auto voffsets_k = hn::LoadU(di, offsets_k);
 
-    hn::Vec<HwyTag> Bij[BS2];
-    hn::Vec<HwyTag> Bkj[BS2];
-    hn::Vec<HwyTag> Bik[BS2];
-    hn::Vec<HwyTag> prod[BS2];
-    hn::Vec<HwyTag> diff[BS2];
+    hn::Vec<HwyTagD> Bij[BS2];
+    hn::Vec<HwyTagD> Bkj[BS2];
+    hn::Vec<HwyTagD> Bik[BS2];
+    hn::Vec<HwyTagD> prod[BS2];
+    hn::Vec<HwyTagD> diff[BS2];
 
     gather_blocks_hwy(Bij, blocks, voffsets_i, mask);
     gather_blocks_hwy(Bkj, blocks, voffsets_k, mask);
