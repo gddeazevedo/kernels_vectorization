@@ -34,12 +34,12 @@ void scatter_blocks_omp(
     const int64_t *offsets,
     int n_blocks
 );
-void matmat_batch_omp(
+void matmat_omp(
     double dst[BS2][BATCH],
     const double A[BS2][BATCH],
     const double B[BS2][BATCH]
 );
-void matsub_batch_omp(
+void matmat_omp(
     double dst[BS2][BATCH],
     const double A[BS2][BATCH],
     const double B[BS2][BATCH]

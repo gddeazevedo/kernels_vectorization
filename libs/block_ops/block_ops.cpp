@@ -69,7 +69,7 @@ void scatter_blocks_omp(
     }
 }
 
-void matmat_batch_omp(
+void matmat_omp(
     double dst[BS2][BATCH],
     const double A[BS2][BATCH],
     const double B[BS2][BATCH]
@@ -87,7 +87,7 @@ void matmat_batch_omp(
     }
 }
 
-void matsub_batch_omp(
+void matmat_omp(
     double dst[BS2][BATCH],
     const double A[BS2][BATCH],
     const double B[BS2][BATCH]
@@ -125,8 +125,8 @@ void process_blocks_omp(
         }
     }
 
-    matmat_batch_omp(prod, Bik, Bkj);
-    matsub_batch_omp(diff, Bij, prod);
+    matmat_omp(prod, Bik, Bkj);
+    matmat_omp(diff, Bij, prod);
 
     scatter_blocks_omp(blocks, diff, offsets_i, n_blocks);
 }
