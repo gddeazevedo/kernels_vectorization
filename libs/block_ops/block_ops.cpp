@@ -131,7 +131,7 @@ void process_blocks_omp(
     scatter_blocks_omp(blocks, diff, offsets_i, n_blocks);
 }
 
-void gather_blocks_avx256(
+void gather_blocks_avx2(
     __m256d dst[BS2],
     const double *blocks,
     __m256i offsets,
@@ -146,7 +146,7 @@ void gather_blocks_avx256(
     }
 }
 
-void scatter_blocks_avx256(
+void scatter_blocks_avx2(
     double *blocks,
     const __m256d src[BS2],
     const int64_t *offsets,
@@ -163,7 +163,7 @@ void scatter_blocks_avx256(
     }
 }
 
-void matmat_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2])
+void matmat_avx2(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2])
 {
     for (int row = 0; row < BS; row++) {
         for (int col = 0; col < BS; col++) {
@@ -182,7 +182,7 @@ void matsub_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2])
     }
 }
 
-void process_blocks_avx256(
+void process_blocks_avx2(
     double *blocks,
     const double *block_ik,
     const int64_t *offsets_i,
@@ -201,17 +201,17 @@ void process_blocks_avx256(
     __m256d prod[BS2];
     __m256d diff[BS2];
 
-    gather_blocks_avx256(Bij, blocks, voffsets_i, mask);
-    gather_blocks_avx256(Bkj, blocks, voffsets_k, mask);
+    gather_blocks_avx2(Bij, blocks, voffsets_i, mask);
+    gather_blocks_avx2(Bkj, blocks, voffsets_k, mask);
 
     for (int reg = 0; reg < BS2; reg++) {
         Bik[reg] = _mm256_set1_pd(block_ik[reg]);
     }
 
-    matmat_avx256(prod, Bik, Bkj);
+    matmat_avx2(prod, Bik, Bkj);
     matsub_avx256(diff, Bij, prod);
 
-    scatter_blocks_avx256(blocks, diff, offsets_i, n_blocks);
+    scatter_blocks_avx2(blocks, diff, offsets_i, n_blocks);
 }
 
 void gather_blocks_avx512(

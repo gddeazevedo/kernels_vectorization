@@ -15,7 +15,7 @@ class SpmvBenchmark : public BenchmarkBase
         const std::vector<SpmvVariant> variants = {
             {"Base",        spmv},
             {"OpenMP",      spmv_omp},
-            {"AVX256",      spmv_avx256},
+            {"AVX2",        spmv_avx2},
             {"AVX512",      spmv_avx512},
             {"Highway",     spmv_hwy}
         };

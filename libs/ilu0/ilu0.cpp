@@ -111,7 +111,7 @@ void ilu0_decomposition_omp(BlockCSR &A)
     free(inv);
 }
 
-void ilu0_decomposition_avx256(BlockCSR &A)
+void ilu0_decomposition_avx2(BlockCSR &A)
 {
     int bs2 = A.bs * A.bs;
 
@@ -158,13 +158,13 @@ void ilu0_decomposition_avx256(BlockCSR &A)
                 counter++;
 
                 if (counter == batch_size) {
-                    process_blocks_avx256(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_avx2(A.bvals, block_ik, offsets_i, offsets_k, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_avx256(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_avx2(A.bvals, block_ik, offsets_i, offsets_k, counter);
             }
         }
     }

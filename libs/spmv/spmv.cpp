@@ -79,7 +79,7 @@ static double hadd_256(__m256d v)
     return _mm_cvtsd_f64(final_sum);
 }
 
-void spmv_avx256(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y)
+void spmv_avx2(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y)
 {
     int bs = A.bs;
 

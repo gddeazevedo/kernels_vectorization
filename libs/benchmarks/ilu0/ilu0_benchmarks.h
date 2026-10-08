@@ -16,7 +16,7 @@ class Ilu0Benchmark : public BenchmarkBase
         const std::vector<Ilu0Variant> variants = {
             {"Base",        ilu0_decomposition},
             {"OpenMP",      ilu0_decomposition_omp},
-            {"AVX256",      ilu0_decomposition_avx256},
+            {"AVX2",        ilu0_decomposition_avx2},
             {"AVX512",      ilu0_decomposition_avx512},
             {"Highway",     ilu0_decomposition_hwy}
         };

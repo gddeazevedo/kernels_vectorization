@@ -52,21 +52,21 @@ void process_blocks_omp(
     int n_blocks
 );
 
-void gather_blocks_avx256(
+void gather_blocks_avx2(
     __m256d dst[BS2],
     const double *blocks,
     __m256i offsets,
     __mmask8 mask
 );
-void scatter_blocks_avx256(
+void scatter_blocks_avx2(
     double *blocks,
     const __m256d src[BS2],
     const int64_t *offsets,
     int n_blocks
 );
-void matmat_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2]);
+void matmat_avx2(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2]);
 void matsub_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2]);
-void process_blocks_avx256(
+void process_blocks_avx2(
     double *blocks,
     const double *block_ik,
     const int64_t *offsets_i,

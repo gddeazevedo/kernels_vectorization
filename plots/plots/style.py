@@ -1,7 +1,7 @@
 COLORS = {
     "Base":    "#6c757d",
     "OpenMP":  "#dc3545",
-    "AVX256":  "#6610f2",
+    "AVX2":  "#6610f2",
     "AVX512":  "#fd7e14",
     "Highway": "#17E110"
 }

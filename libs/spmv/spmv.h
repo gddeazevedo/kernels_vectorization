@@ -18,6 +18,6 @@ static double hadd_256(__m256d v);
 
 void spmv(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y);
 void spmv_omp(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y);
-void spmv_avx256(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y);
+void spmv_avx2(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y);
 void spmv_avx512(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y);
 void spmv_hwy(const BlockCSR &A, const double * __restrict__ x, double * __restrict__ y);
