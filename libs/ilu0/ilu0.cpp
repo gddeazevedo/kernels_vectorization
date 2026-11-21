@@ -77,8 +77,8 @@ void ilu0_decomposition_omp(BlockCSR &A)
             memcpy(block_ik, prod, sizeof(double) * bs2);
             memset(prod, 0, sizeof(double) * bs2);
 
-            int64_t offsets_i[BATCH];
-            int64_t offsets_k[BATCH];
+            int64_t offsets_ij[BATCH];
+            int64_t offsets_kj[BATCH];
             int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
@@ -90,19 +90,19 @@ void ilu0_decomposition_omp(BlockCSR &A)
                     continue;
                 }
 
-                offsets_i[counter] = (int64_t) q * bs2;
-                offsets_k[counter] = block_kj - A.bvals;
+                offsets_ij[counter] = (int64_t) q * bs2;
+                offsets_kj[counter] = block_kj - A.bvals;
 
                 counter++;
 
                 if (counter == BATCH) {
-                    process_blocks_omp(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_omp(A.bvals, block_ik, offsets_ij, offsets_kj, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_omp(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_omp(A.bvals, block_ik, offsets_ij, offsets_kj, counter);
             }
         }
     }
@@ -139,8 +139,8 @@ void ilu0_decomposition_avx2(BlockCSR &A)
             memcpy(block_ik, prod, sizeof(double) * bs2);
             memset(prod, 0, sizeof(double) * bs2);
 
-            int64_t offsets_i[batch_size];
-            int64_t offsets_k[batch_size]; 
+            int64_t offsets_ij[batch_size];
+            int64_t offsets_kj[batch_size]; 
             int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
@@ -152,19 +152,19 @@ void ilu0_decomposition_avx2(BlockCSR &A)
                     continue;
                 }
 
-                offsets_i[counter] = q * bs2;
-                offsets_k[counter] = block_kj - A.bvals;
+                offsets_ij[counter] = q * bs2;
+                offsets_kj[counter] = block_kj - A.bvals;
 
                 counter++;
 
                 if (counter == batch_size) {
-                    process_blocks_avx2(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_avx2(A.bvals, block_ik, offsets_ij, offsets_kj, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_avx2(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_avx2(A.bvals, block_ik, offsets_ij, offsets_kj, counter);
             }
         }
     }
@@ -201,8 +201,8 @@ void ilu0_decomposition_avx512(BlockCSR &A)
             memcpy(block_ik, prod, sizeof(double) * bs2);
             memset(prod, 0, sizeof(double) * bs2);
 
-            int64_t offsets_i[batch_size];
-            int64_t offsets_k[batch_size];
+            int64_t offsets_ij[batch_size];
+            int64_t offsets_kj[batch_size];
             int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
@@ -214,19 +214,19 @@ void ilu0_decomposition_avx512(BlockCSR &A)
                     continue;
                 }
 
-                offsets_i[counter] = (int64_t) q * bs2;
-                offsets_k[counter] = block_kj - A.bvals;
+                offsets_ij[counter] = (int64_t) q * bs2;
+                offsets_kj[counter] = block_kj - A.bvals;
 
                 counter++;
 
                 if (counter == batch_size) {
-                    process_blocks_avx512(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_avx512(A.bvals, block_ik, offsets_ij, offsets_kj, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_avx512(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_avx512(A.bvals, block_ik, offsets_ij, offsets_kj, counter);
             }
         }
     }
@@ -264,8 +264,8 @@ void ilu0_decomposition_hwy(BlockCSR &A)
             memcpy(block_ik, prod, sizeof(double) * bs2);
             memset(prod, 0, sizeof(double) * bs2);
 
-            int64_t offsets_i[HWY_BATCH_MAX];
-            int64_t offsets_k[HWY_BATCH_MAX];
+            int64_t offsets_ij[HWY_BATCH_MAX];
+            int64_t offsets_kj[HWY_BATCH_MAX];
             int counter = 0;
 
             for (int q = p + 1; q < row_end; q++) {
@@ -277,19 +277,19 @@ void ilu0_decomposition_hwy(BlockCSR &A)
                     continue;
                 }
 
-                offsets_i[counter] = (int64_t) q * bs2;
-                offsets_k[counter] = block_kj - A.bvals;
+                offsets_ij[counter] = (int64_t) q * bs2;
+                offsets_kj[counter] = block_kj - A.bvals;
 
                 counter++;
 
                 if (counter == batch_size) {
-                    process_blocks_hwy(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                    process_blocks_hwy(A.bvals, block_ik, offsets_ij, offsets_kj, counter);
                     counter = 0;
                 }
             }
 
             if (counter > 0) {
-                process_blocks_hwy(A.bvals, block_ik, offsets_i, offsets_k, counter);
+                process_blocks_hwy(A.bvals, block_ik, offsets_ij, offsets_kj, counter);
             }
         }
     }

@@ -39,7 +39,7 @@ void matmat_omp(
     const double A[BS2][BATCH],
     const double B[BS2][BATCH]
 );
-void matmat_omp(
+void matsub_omp(
     double dst[BS2][BATCH],
     const double A[BS2][BATCH],
     const double B[BS2][BATCH]
@@ -47,8 +47,8 @@ void matmat_omp(
 void process_blocks_omp(
     double *blocks,
     const double *block_ik,
-    const int64_t *offsets_i,
-    const int64_t *offsets_k,
+    const int64_t *offsets_ij,
+    const int64_t *offsets_kj,
     int n_blocks
 );
 
@@ -69,8 +69,8 @@ void matsub_avx256(__m256d dst[BS2], const __m256d A[BS2], const __m256d B[BS2])
 void process_blocks_avx2(
     double *blocks,
     const double *block_ik,
-    const int64_t *offsets_i,
-    const int64_t *offsets_k,
+    const int64_t *offsets_ij,
+    const int64_t *offsets_kj,
     int n_blocks
 );
 
@@ -91,8 +91,8 @@ void matsub_avx512(__m512d dst[BS2], const __m512d A[BS2], const __m512d B[BS2])
 void process_blocks_avx512(
     double *blocks,
     const double *block_ik,
-    const int64_t *offsets_i,
-    const int64_t *offsets_k,
+    const int64_t *offsets_ij,
+    const int64_t *offsets_kj,
     int n_blocks
 );
 
@@ -121,7 +121,7 @@ void matsub_hwy(
 void process_blocks_hwy(
     double *blocks,
     const double *block_ik,
-    const int64_t *offsets_i,
-    const int64_t *offsets_k,
+    const int64_t *offsets_ij,
+    const int64_t *offsets_kj,
     int n_blocks
 );
